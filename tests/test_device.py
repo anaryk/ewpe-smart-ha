@@ -16,11 +16,24 @@ from custom_components.ewpe_smart.protocol import (
     EwpeError,
     EwpeProtocolError,
     EwpeTimeout,
+    unicast_scan,
 )
 
 from .mock_device import start_mock_device
 
 pytestmark = pytest.mark.usefixtures("socket_enabled")
+
+
+@pytest.mark.asyncio
+async def test_unicast_scan_returns_dev_reply() -> None:
+    """Unicast scan must be sent as raw JSON and return the decrypted dev info."""
+    mock, port = await start_mock_device()
+
+    reply = await unicast_scan("127.0.0.1", port, timeout=2.0)
+
+    assert reply["t"] == "dev"
+    assert reply["mac"] == mock.mac
+    assert reply["name"] == mock.name
 
 
 @pytest.mark.asyncio

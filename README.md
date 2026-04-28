@@ -6,7 +6,7 @@
 [![CodeQL](https://github.com/anaryk/ewpe-smart-ha/actions/workflows/codeql.yml/badge.svg)](https://github.com/anaryk/ewpe-smart-ha/actions/workflows/codeql.yml)
 [![Bandit](https://github.com/anaryk/ewpe-smart-ha/actions/workflows/bandit.yml/badge.svg)](https://github.com/anaryk/ewpe-smart-ha/actions/workflows/bandit.yml)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
-![version](https://img.shields.io/badge/version-0.1.0-blue)
+![version](https://img.shields.io/badge/version-0.1.1-blue)
 ![license](https://img.shields.io/badge/license-MIT-green.svg)
 
 Local-polling Home Assistant integration for air conditioners controlled via the

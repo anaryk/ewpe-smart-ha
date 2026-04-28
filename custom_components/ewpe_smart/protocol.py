@@ -137,20 +137,47 @@ async def send_request(
     The reply ``pack`` field is decrypted with the same ``key`` that was used to
     encrypt the request. Mismatched keys raise :class:`EwpeAuthError`.
     """
+    return await _send_raw(
+        host, port, _outer_packet(payload, key), reply_key=key, timeout=timeout
+    )
+
+
+async def unicast_scan(
+    host: str, port: int, timeout: float = DEFAULT_TIMEOUT
+) -> dict[str, Any]:
+    """Send a raw (unencrypted) scan packet to one host and return the dev reply.
+
+    The reference EWPE Smart wire format treats the scan packet specially —
+    devices reply only when the scan is sent as raw JSON (no outer envelope,
+    no encryption). The reply itself is wrapped in the standard envelope with
+    its ``pack`` field encrypted using the generic key.
+    """
+    raw = json.dumps({"t": "scan"}, separators=(",", ":")).encode("utf-8")
+    _LOGGER.debug("Sending raw unicast scan to %s:%s", host, port)
+    return await _send_raw(host, port, raw, reply_key=GENERIC_KEY, timeout=timeout)
+
+
+async def _send_raw(
+    host: str,
+    port: int,
+    packet: bytes,
+    reply_key: bytes,
+    timeout: float,
+) -> dict[str, Any]:
+    """Open an ephemeral socket, send ``packet`` once, decrypt the first reply."""
     loop = asyncio.get_running_loop()
     transport, protocol = await loop.create_datagram_endpoint(
         _RequestProtocol, remote_addr=(host, port)
     )
     try:
-        transport.sendto(_outer_packet(payload, key))
+        transport.sendto(packet)
         try:
             data, _addr = await asyncio.wait_for(protocol.future, timeout=timeout)
         except TimeoutError as err:
             raise EwpeTimeout(f"No reply from {host}:{port} in {timeout}s") from err
     finally:
         transport.close()
-
-    return _parse_reply(data, key)
+    return _parse_reply(data, reply_key)
 
 
 def _parse_reply(data: bytes, key: bytes) -> dict[str, Any]:

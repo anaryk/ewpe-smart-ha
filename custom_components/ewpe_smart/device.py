@@ -21,6 +21,7 @@ from .protocol import (
     EwpeTimeout,
     scan,
     send_request,
+    unicast_scan,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,6 +44,9 @@ class EwpeDevice:
         if not self.mac:
             await self._discover()
 
+        _LOGGER.info(
+            "Binding to %s (mac %s) on %s:%s", self.name, self.mac, self.host, self.port
+        )
         reply = await send_request(
             self.host,
             self.port,
@@ -56,17 +60,14 @@ class EwpeDevice:
         if not isinstance(key, str) or not key:
             raise EwpeProtocolError("Bind reply contains no usable key")
         self.key = key.encode("utf-8")
-        _LOGGER.debug("Bound device %s (%s) on %s", self.name, self.mac, self.host)
+        _LOGGER.info("Bound device %s (%s) on %s", self.name, self.mac, self.host)
 
     async def _discover(self) -> None:
         """Send a unicast scan to ``self.host`` to learn MAC and name."""
-        reply = await send_request(
-            self.host,
-            self.port,
-            GENERIC_KEY,
-            {"t": "scan"},
-            timeout=self.timeout,
+        _LOGGER.info(
+            "Discovering device on %s:%s via unicast scan", self.host, self.port
         )
+        reply = await unicast_scan(self.host, self.port, timeout=self.timeout)
         if reply.get("t") != "dev":
             raise EwpeProtocolError(f"Unexpected scan reply: {reply!r}")
         mac = reply.get("cid") or reply.get("mac")
@@ -79,6 +80,12 @@ class EwpeDevice:
             for k in ("brand", "model", "vender", "ver", "hid")
             if k in reply
         }
+        _LOGGER.info(
+            "Discovered %s (mac=%s, model=%s)",
+            self.name,
+            self.mac,
+            self.info.get("model", "unknown"),
+        )
 
     async def get_status(self, cols: list[str] | None = None) -> dict[str, int]:
         """Read the current state of the device."""
