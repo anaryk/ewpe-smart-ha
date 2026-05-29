@@ -45,6 +45,14 @@ def test_encrypt_produces_ascii_base64() -> None:
     assert len(cipher) % 4 == 0
 
 
+def test_v1_bind_ciphertext_matches_greeclimate() -> None:
+    """Wire bytes must match greeclimate so Gree firmware accepts bind."""
+    payload = {"t": "bind", "mac": "580d0df2deaf", "uid": 0}
+    assert encrypt(payload) == (
+        "UH1xnvFY7toQqZpWdQqnj8Y01Y3RTO6WGC8Szx4uAGxYKP+bEKm/j2Ku1yi1i584"
+    )
+
+
 # ── V2 (AES-GCM) ──────────────────────────────────────────────────────────
 
 

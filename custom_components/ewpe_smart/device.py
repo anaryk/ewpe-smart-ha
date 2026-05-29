@@ -24,6 +24,7 @@ from .protocol import (
     EwpeProtocolError,
     EwpeTimeout,
     scan,
+    scan_then_bind,
     send_request,
     unicast_scan,
 )
@@ -54,27 +55,43 @@ class EwpeDevice:
     timeout: float = DEFAULT_TIMEOUT
     info: dict[str, Any] = field(default_factory=dict)
 
-    async def bind(self) -> None:
+    async def bind(self, *, protocol_version: int | None = None) -> None:
         """Discover MAC/name (if not already known) and obtain the device key."""
-        if not self.mac:
-            await self._discover()
-
         _LOGGER.info(
-            "Binding to %s (mac %s, proto v%d) on %s:%s",
-            self.name,
-            self.mac,
-            self.version,
+            "Binding to %s on %s:%s",
+            self.name or self.host,
             self.host,
             self.port,
         )
-        reply = await send_request(
+        if self.mac and self.key:
+            return
+
+        dev_reply, version, reply = await scan_then_bind(
             self.host,
             self.port,
-            _generic_key_for(self.version),
-            {"mac": self.mac, "t": "bind", "uid": 0},
             timeout=self.timeout,
-            version=self.version,
+            version=protocol_version,
         )
+        if not self.mac:
+            mac = dev_reply.get("cid") or dev_reply.get("mac")
+            if not mac:
+                raise EwpeProtocolError("Scan reply contains no MAC")
+            self.mac = mac
+            self.name = dev_reply.get("name") or mac
+            self.version = version
+            self.info = {
+                k: dev_reply[k]
+                for k in ("brand", "model", "vender", "ver", "hid")
+                if k in dev_reply
+            }
+            _LOGGER.info(
+                "Discovered %s (mac=%s, model=%s, proto=v%d)",
+                self.name,
+                self.mac,
+                self.info.get("model", "unknown"),
+                self.version,
+            )
+
         if reply.get("t") != "bindok":
             raise EwpeProtocolError(f"Unexpected bind reply: {reply!r}")
         key = reply.get("key")
@@ -130,7 +147,7 @@ class EwpeDevice:
             self.host,
             self.port,
             self.key,
-            {"cols": cols, "mac": self.mac, "t": "status"},
+            {"t": "status", "mac": self.mac, "cols": cols},
             timeout=self.timeout,
             version=self.version,
         )
@@ -159,7 +176,7 @@ class EwpeDevice:
             self.host,
             self.port,
             self.key,
-            {"opt": opt, "p": values, "mac": self.mac, "t": "cmd"},
+            {"t": "cmd", "mac": self.mac, "opt": opt, "p": values},
             timeout=self.timeout,
             version=self.version,
         )
