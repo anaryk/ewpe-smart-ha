@@ -13,7 +13,7 @@ from .const import (
     GENERIC_KEY,
     GENERIC_KEY_V2,
     PARAM_TEMP_SENSOR,
-    PHASE1_PARAMS,
+    STATUS_PARAMS,
     PROTO_V1,
     PROTO_V2,
     TEMP_SENSOR_OFFSET,
@@ -184,7 +184,7 @@ class EwpeDevice:
         """Read the current state of the device."""
         if not self.key:
             raise EwpeError("Device is not bound; call bind() first")
-        cols = cols or PHASE1_PARAMS
+        cols = cols or STATUS_PARAMS
         reply = await self._send_with_version_fallback(
             {"t": "status", "mac": self.mac, "cols": cols},
         )
