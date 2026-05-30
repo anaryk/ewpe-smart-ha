@@ -135,12 +135,13 @@ class MockEwpeProtocol(asyncio.DatagramProtocol):
                 "key": self.device_key.decode("utf-8"),
             }
         if t == "status":
-            cols = inner.get("cols") or list(self.status.keys())
+            requested = inner.get("cols") or list(self.status.keys())
+            cols = [c for c in requested if c in self.status]
             return {
                 "t": "dat",
                 "mac": self.mac,
                 "cols": cols,
-                "dat": [self.status.get(c, 0) for c in cols],
+                "dat": [self.status[c] for c in cols],
             }
         if t == "cmd":
             opt = inner.get("opt") or []
