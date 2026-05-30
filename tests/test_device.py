@@ -12,8 +12,9 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from custom_components.ewpe_smart.const import PROTO_V1, PROTO_V2
+from custom_components.ewpe_smart.const import PARAM_LIG, PARAM_QUIET, PROTO_V1, PROTO_V2
 from custom_components.ewpe_smart.device import EwpeDevice
+from custom_components.ewpe_smart.switch import supported_switch_descriptions
 from custom_components.ewpe_smart.protocol import (
     EwpeError,
     EwpeProtocolError,
@@ -97,6 +98,34 @@ async def test_get_status_falls_back_to_alternate_protocol_version() -> None:
     assert version_updates == [PROTO_V2]
     assert mock_send.await_args_list[0].kwargs["version"] == PROTO_V1
     assert mock_send.await_args_list[1].kwargs["version"] == PROTO_V2
+
+
+@pytest.mark.asyncio
+async def test_get_status_omits_unsupported_switch_params_from_mock() -> None:
+    """Mock devices only echo params they know about (hide-when-missing semantics)."""
+    mock, port = await start_mock_device(
+        status={
+            "Pow": 1,
+            "Mod": 1,
+            "SetTem": 22,
+            "TemUn": 0,
+            "WdSpd": 0,
+            "TemSen": 65,
+            "Quiet": 0,
+            "Lig": 1,
+        }
+    )
+    device = EwpeDevice(host="127.0.0.1", port=port, timeout=2.0)
+    await device.bind()
+
+    status = await device.get_status()
+    descriptions = supported_switch_descriptions(status)
+
+    assert PARAM_QUIET in status
+    assert PARAM_LIG in status
+    assert "Tur" not in status
+    assert {d.param for d in descriptions} == {PARAM_QUIET, PARAM_LIG}
+    assert mock.mac == device.mac
 
 
 @pytest.mark.asyncio
