@@ -5,13 +5,25 @@ from __future__ import annotations
 import pytest
 
 from custom_components.ewpe_smart.const import GENERIC_KEY_V2
+from custom_components.ewpe_smart.const import PARAM_BUZZER_ON_OFF
 from custom_components.ewpe_smart.protocol import (
     EwpeAuthError,
+    append_silent_buzzer,
     decrypt,
     decrypt_v2,
     encrypt,
     encrypt_v2,
 )
+
+
+def test_append_silent_buzzer_adds_param_once() -> None:
+    opt = ["Pow"]
+    p = [1]
+    append_silent_buzzer(opt, p)
+    assert opt == ["Pow", PARAM_BUZZER_ON_OFF]
+    assert p == [1, 1]
+    append_silent_buzzer(opt, p)
+    assert opt.count(PARAM_BUZZER_ON_OFF) == 1
 
 
 def test_encrypt_decrypt_roundtrip_default_key() -> None:

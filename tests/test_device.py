@@ -12,7 +12,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from custom_components.ewpe_smart.const import PARAM_LIG, PARAM_QUIET, PROTO_V1, PROTO_V2
+from custom_components.ewpe_smart.const import (
+    PARAM_BUZZER_ON_OFF,
+    PARAM_LIG,
+    PARAM_QUIET,
+    PROTO_V1,
+    PROTO_V2,
+)
 from custom_components.ewpe_smart.device import EwpeDevice
 from custom_components.ewpe_smart.switch import supported_switch_descriptions
 from custom_components.ewpe_smart.protocol import (
@@ -146,7 +152,9 @@ async def test_get_status_returns_decoded_dict_with_temp_offset() -> None:
 @pytest.mark.asyncio
 async def test_set_state_round_trip() -> None:
     mock, port = await start_mock_device()
-    device = EwpeDevice(host="127.0.0.1", port=port, timeout=2.0)
+    device = EwpeDevice(
+        host="127.0.0.1", port=port, timeout=2.0, silent_commands=False
+    )
     await device.bind()
 
     result = await device.set_state({"Pow": 1, "SetTem": 24})
@@ -154,6 +162,50 @@ async def test_set_state_round_trip() -> None:
     assert result == {"Pow": 1, "SetTem": 24}
     assert mock.received_commands == [{"opt": ["Pow", "SetTem"], "p": [1, 24]}]
     assert mock.status["SetTem"] == 24
+
+
+@pytest.mark.asyncio
+async def test_set_state_appends_buzzer_when_silent_commands_enabled() -> None:
+    mock, port = await start_mock_device()
+    device = EwpeDevice(
+        host="127.0.0.1", port=port, timeout=2.0, silent_commands=True
+    )
+    await device.bind()
+
+    result = await device.set_state({"Pow": 1, "SetTem": 24})
+
+    assert result == {"Pow": 1, "SetTem": 24}
+    assert mock.received_commands == [
+        {"opt": ["Pow", "SetTem", PARAM_BUZZER_ON_OFF], "p": [1, 24, 1]}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_set_state_omits_buzzer_when_silent_commands_disabled() -> None:
+    mock, port = await start_mock_device()
+    device = EwpeDevice(
+        host="127.0.0.1", port=port, timeout=2.0, silent_commands=False
+    )
+    await device.bind()
+
+    await device.set_state({"Pow": 0})
+
+    assert mock.received_commands == [{"opt": ["Pow"], "p": [0]}]
+
+
+@pytest.mark.asyncio
+async def test_set_state_does_not_duplicate_buzzer_when_caller_sets_it() -> None:
+    mock, port = await start_mock_device()
+    device = EwpeDevice(
+        host="127.0.0.1", port=port, timeout=2.0, silent_commands=True
+    )
+    await device.bind()
+
+    await device.set_state({PARAM_BUZZER_ON_OFF: 0, "Pow": 1})
+
+    assert mock.received_commands == [
+        {"opt": [PARAM_BUZZER_ON_OFF, "Pow"], "p": [0, 1]}
+    ]
 
 
 @pytest.mark.asyncio

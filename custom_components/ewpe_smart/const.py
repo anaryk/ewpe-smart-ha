@@ -44,8 +44,11 @@ CONF_MAC = "mac"
 CONF_KEY = "key"
 CONF_NAME = "name"
 CONF_UPDATE_INTERVAL = "update_interval"
+CONF_SILENT_COMMANDS = "silent_commands"
 CONF_BROADCAST = "broadcast"
 CONF_VERSION = "protocol_version"
+
+DEFAULT_SILENT_COMMANDS = True
 
 # ── Device parameter keys ──────────────────────────────────────────────────
 PARAM_POWER = "Pow"
@@ -63,6 +66,11 @@ PARAM_HEALTH = "Health"
 PARAM_LIG = "Lig"
 PARAM_SVST = "SvSt"
 PARAM_AIR = "Air"
+
+# Undocumented Gree parameter — append to cmd packets to suppress the beep.
+# Does not persist across power cycles; must be sent with each command.
+PARAM_BUZZER_ON_OFF = "Buzzer_ON_OFF"
+BUZZER_SILENT = 1
 
 SWITCH_PARAMS: list[str] = [
     PARAM_SLEEP,

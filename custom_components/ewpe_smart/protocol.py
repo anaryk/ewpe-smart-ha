@@ -36,12 +36,14 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from .const import (
+    BUZZER_SILENT,
     DEFAULT_BIND_TIMEOUT,
     DEFAULT_TIMEOUT,
     GCM_AAD,
     GCM_NONCE,
     GENERIC_KEY,
     GENERIC_KEY_V2,
+    PARAM_BUZZER_ON_OFF,
     PROTO_V1,
     PROTO_V2,
 )
@@ -67,6 +69,13 @@ class EwpeProtocolError(EwpeError):
 
 class EwpeAuthError(EwpeError):
     """Raised when a reply cannot be decrypted with the supplied key."""
+
+
+def append_silent_buzzer(opt: list[str], p: list[int]) -> None:
+    """Append ``Buzzer_ON_OFF=1`` to a cmd packet when not already present."""
+    if PARAM_BUZZER_ON_OFF not in opt:
+        opt.append(PARAM_BUZZER_ON_OFF)
+        p.append(BUZZER_SILENT)
 
 
 def _aes_ecb(key: bytes) -> Cipher:

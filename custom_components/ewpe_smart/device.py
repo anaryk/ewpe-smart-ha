@@ -10,6 +10,7 @@ from typing import Any
 from .const import (
     DEFAULT_PORT,
     DEFAULT_TIMEOUT,
+    DEFAULT_SILENT_COMMANDS,
     GENERIC_KEY,
     GENERIC_KEY_V2,
     PARAM_TEMP_SENSOR,
@@ -23,6 +24,7 @@ from .protocol import (
     EwpeError,
     EwpeProtocolError,
     EwpeTimeout,
+    append_silent_buzzer,
     scan,
     scan_then_bind,
     send_request,
@@ -47,6 +49,7 @@ class EwpeDevice:
     key: bytes | None = None
     version: int = PROTO_V1
     timeout: float = DEFAULT_TIMEOUT
+    silent_commands: bool = DEFAULT_SILENT_COMMANDS
     info: dict[str, Any] = field(default_factory=dict)
     on_version_changed: Callable[[int], None] | None = field(
         default=None, repr=False, compare=False
@@ -209,6 +212,8 @@ class EwpeDevice:
             return {}
         opt = list(params.keys())
         values = list(params.values())
+        if self.silent_commands:
+            append_silent_buzzer(opt, values)
         reply = await self._send_with_version_fallback(
             {"t": "cmd", "mac": self.mac, "opt": opt, "p": values},
         )
@@ -218,7 +223,8 @@ class EwpeDevice:
             reply.get("val"), list
         ):
             raise EwpeProtocolError(f"Cmd reply is malformed: {reply!r}")
-        return dict(zip(reply["opt"], reply["val"], strict=False))
+        result = dict(zip(reply["opt"], reply["val"], strict=False))
+        return {k: result[k] for k in params if k in result}
 
 
 __all__ = [

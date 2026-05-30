@@ -13,9 +13,11 @@ from .const import (
     CONF_MAC,
     CONF_NAME,
     CONF_PORT,
+    CONF_SILENT_COMMANDS,
     CONF_UPDATE_INTERVAL,
     CONF_VERSION,
     DEFAULT_PORT,
+    DEFAULT_SILENT_COMMANDS,
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
     PLATFORMS,
@@ -37,6 +39,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         name=data.get(CONF_NAME) or data[CONF_MAC],
         key=data[CONF_KEY].encode("utf-8"),
         version=data.get(CONF_VERSION, PROTO_V1),
+        silent_commands=entry.options.get(
+            CONF_SILENT_COMMANDS, DEFAULT_SILENT_COMMANDS
+        ),
     )
 
     update_interval = entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)

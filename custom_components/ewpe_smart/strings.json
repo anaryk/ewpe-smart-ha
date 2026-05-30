@@ -50,7 +50,11 @@
       "init": {
         "title": "EWPE Smart options",
         "data": {
+          "silent_commands": "Silent commands",
           "update_interval": "Polling interval (seconds)"
+        },
+        "data_description": {
+          "silent_commands": "When enabled, the unit will not beep when you change settings from Home Assistant."
         }
       }
     }

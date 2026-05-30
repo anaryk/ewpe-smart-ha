@@ -50,7 +50,11 @@
       "init": {
         "title": "Nastavení EWPE Smart",
         "data": {
+          "silent_commands": "Tiché příkazy",
           "update_interval": "Interval dotazování (sekundy)"
+        },
+        "data_description": {
+          "silent_commands": "Při zapnutí jednotka nebípá při změně nastavení z Home Assistant."
         }
       }
     }

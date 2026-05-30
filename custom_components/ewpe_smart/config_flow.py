@@ -21,11 +21,13 @@ from .const import (
     CONF_MAC,
     CONF_NAME,
     CONF_PORT,
+    CONF_SILENT_COMMANDS,
     CONF_UPDATE_INTERVAL,
     CONF_VERSION,
     DEFAULT_BROADCAST,
     DEFAULT_PORT,
     DEFAULT_SCAN_TIMEOUT,
+    DEFAULT_SILENT_COMMANDS,
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
     MAX_UPDATE_INTERVAL,
@@ -238,15 +240,21 @@ class EwpeOptionsFlow(OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        current = self.entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
+        current_interval = self.entry.options.get(
+            CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL
+        )
+        current_silent = self.entry.options.get(
+            CONF_SILENT_COMMANDS, DEFAULT_SILENT_COMMANDS
+        )
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
-                    vol.Optional(CONF_UPDATE_INTERVAL, default=current): vol.All(
+                    vol.Optional(CONF_SILENT_COMMANDS, default=current_silent): bool,
+                    vol.Optional(CONF_UPDATE_INTERVAL, default=current_interval): vol.All(
                         vol.Coerce(int),
                         vol.Range(min=MIN_UPDATE_INTERVAL, max=MAX_UPDATE_INTERVAL),
-                    )
+                    ),
                 }
             ),
         )

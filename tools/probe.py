@@ -15,6 +15,7 @@ Usage:
     python3 tools/probe.py scan 192.168.1.50 --decrypt --bind
     python3 tools/probe.py status 192.168.1.50 --key DEVICEKEY --mac AA:BB:...
     python3 tools/probe.py set 192.168.1.50 --key DEVICEKEY --mac AA:BB:... Quiet=1
+    python3 tools/probe.py set 192.168.1.50 --key DEVICEKEY --mac AA:BB:... --silent Quiet=1
 """
 
 from __future__ import annotations
@@ -35,6 +36,10 @@ V1_KEY = b"a3K8Bx%2r8Y7#xDh"
 V2_KEY = b"{yxAHAY_Lm6pbC/<"
 V2_NONCE = b"\x54\x40\x78\x44\x49\x67\x5a\x51\x6c\x5e\x63\x13"
 V2_AAD = b"qualcomm-test"
+
+# Keep in sync with custom_components/ewpe_smart/const.py
+PARAM_BUZZER_ON_OFF = "Buzzer_ON_OFF"
+BUZZER_SILENT = 1
 
 # Keep in sync with custom_components/ewpe_smart/const.py STATUS_PARAMS
 STATUS_PARAMS = [
@@ -368,6 +373,13 @@ def cmd_status(ip: str, key: str, mac: str, version: int | None) -> int:
     return 0
 
 
+def _append_silent_buzzer(opt: list[str], p: list[int]) -> None:
+    """Keep in sync with custom_components/ewpe_smart/protocol.py."""
+    if PARAM_BUZZER_ON_OFF not in opt:
+        opt.append(PARAM_BUZZER_ON_OFF)
+        p.append(BUZZER_SILENT)
+
+
 def _parse_params(values: list[str]) -> dict[str, int]:
     params: dict[str, int] = {}
     for item in values:
@@ -379,11 +391,19 @@ def _parse_params(values: list[str]) -> dict[str, int]:
 
 
 def cmd_set(
-    ip: str, key: str, mac: str, version: int | None, params: dict[str, int]
+    ip: str,
+    key: str,
+    mac: str,
+    version: int | None,
+    params: dict[str, int],
+    *,
+    silent: bool = False,
 ) -> int:
     device_key = key.encode("utf-8")
     opt = list(params.keys())
     values = list(params.values())
+    if silent:
+        _append_silent_buzzer(opt, values)
     version_label = f"v{version}" if version else "auto"
     print(f"[{ip}] → set {dict(zip(opt, values, strict=True))} (proto {version_label})")
     try:
@@ -468,6 +488,11 @@ def main(argv: list[str]) -> int:
     set_parser = subparsers.add_parser("set", help="Set device parameters")
     _add_device_args(set_parser)
     set_parser.add_argument(
+        "--silent",
+        action="store_true",
+        help="Suppress the confirmation beep on this command",
+    )
+    set_parser.add_argument(
         "params",
         nargs="+",
         metavar="Param=value",
@@ -492,7 +517,9 @@ def main(argv: list[str]) -> int:
     except ValueError as err:
         print(f"error: {err}")
         return 2
-    return cmd_set(args.ip, args.key, args.mac, args.version, params)
+    return cmd_set(
+        args.ip, args.key, args.mac, args.version, params, silent=args.silent
+    )
 
 
 if __name__ == "__main__":

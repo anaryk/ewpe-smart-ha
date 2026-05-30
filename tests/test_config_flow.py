@@ -13,6 +13,7 @@ from custom_components.ewpe_smart.const import (
     CONF_KEY,
     CONF_MAC,
     CONF_NAME,
+    CONF_SILENT_COMMANDS,
     DOMAIN,
 )
 
@@ -116,7 +117,9 @@ async def test_options_flow_persists_polling_interval(
         assert result["type"] == data_entry_flow.FlowResultType.FORM
 
         result = await hass.config_entries.options.async_configure(
-            result["flow_id"], {"update_interval": 60}
+            result["flow_id"],
+            {"update_interval": 60, CONF_SILENT_COMMANDS: False},
         )
         assert result["type"] == data_entry_flow.FlowResultType.CREATE_ENTRY
         assert result["data"]["update_interval"] == 60
+        assert result["data"][CONF_SILENT_COMMANDS] is False
