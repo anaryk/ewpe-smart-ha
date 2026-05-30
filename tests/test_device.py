@@ -8,6 +8,7 @@ must be lifted via the ``socket_enabled`` fixture.
 from __future__ import annotations
 
 import asyncio
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -61,6 +62,41 @@ async def test_bind_discovers_mac_and_obtains_key() -> None:
     assert device.name == mock.name
     assert device.key == mock.device_key
     assert device.info.get("model") == "MockAC-1"
+
+
+@pytest.mark.asyncio
+async def test_get_status_falls_back_to_alternate_protocol_version() -> None:
+    """Hybrid devices may store v1 but require v2 for encrypted traffic."""
+    device = EwpeDevice(
+        host="127.0.0.1",
+        port=7000,
+        mac="AA:BB:CC:DD:EE:FF",
+        key=b"abcdefghijklmnop",
+        version=PROTO_V1,
+        timeout=2.0,
+    )
+    version_updates: list[int] = []
+    device.on_version_changed = version_updates.append
+
+    dat_reply = {
+        "t": "dat",
+        "mac": device.mac,
+        "cols": ["Pow", "Mod"],
+        "dat": [1, 1],
+    }
+
+    with patch(
+        "custom_components.ewpe_smart.device.send_request",
+        new_callable=AsyncMock,
+    ) as mock_send:
+        mock_send.side_effect = [EwpeTimeout("v1 timeout"), dat_reply]
+        status = await device.get_status(cols=["Pow", "Mod"])
+
+    assert status == {"Pow": 1, "Mod": 1}
+    assert device.version == PROTO_V2
+    assert version_updates == [PROTO_V2]
+    assert mock_send.await_args_list[0].kwargs["version"] == PROTO_V1
+    assert mock_send.await_args_list[1].kwargs["version"] == PROTO_V2
 
 
 @pytest.mark.asyncio

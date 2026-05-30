@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -47,6 +48,59 @@ class EwpeDevice:
     version: int = PROTO_V1
     timeout: float = DEFAULT_TIMEOUT
     info: dict[str, Any] = field(default_factory=dict)
+    on_version_changed: Callable[[int], None] | None = field(
+        default=None, repr=False, compare=False
+    )
+
+    def _alternate_version(self, version: int) -> int:
+        return PROTO_V2 if version == PROTO_V1 else PROTO_V1
+
+    async def _send_with_version_fallback(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Send an encrypted request, retrying on the other protocol version if needed."""
+        try:
+            return await send_request(
+                self.host,
+                self.port,
+                self.key,
+                payload,
+                timeout=self.timeout,
+                version=self.version,
+            )
+        except (EwpeTimeout, EwpeAuthError) as err:
+            alternate = self._alternate_version(self.version)
+            _LOGGER.info(
+                "Request %s failed on proto v%d for %s, trying v%d",
+                payload.get("t"),
+                self.version,
+                self.host,
+                alternate,
+            )
+            try:
+                reply = await send_request(
+                    self.host,
+                    self.port,
+                    self.key,
+                    payload,
+                    timeout=self.timeout,
+                    version=alternate,
+                )
+            except EwpeError:
+                raise err from None
+            self._set_version(alternate)
+            return reply
+
+    def _set_version(self, version: int) -> None:
+        if self.version == version:
+            return
+        _LOGGER.info(
+            "Device %s now using proto v%d (was v%d)",
+            self.host,
+            version,
+            self.version,
+        )
+        self.version = version
+        if self.on_version_changed is not None:
+            self.on_version_changed(version)
 
     async def bind(self, *, protocol_version: int | None = None) -> None:
         """Discover MAC/name (if not already known) and obtain the device key."""
@@ -131,13 +185,8 @@ class EwpeDevice:
         if not self.key:
             raise EwpeError("Device is not bound; call bind() first")
         cols = cols or PHASE1_PARAMS
-        reply = await send_request(
-            self.host,
-            self.port,
-            self.key,
+        reply = await self._send_with_version_fallback(
             {"t": "status", "mac": self.mac, "cols": cols},
-            timeout=self.timeout,
-            version=self.version,
         )
         if reply.get("t") != "dat":
             raise EwpeProtocolError(f"Unexpected status reply: {reply!r}")
@@ -160,13 +209,8 @@ class EwpeDevice:
             return {}
         opt = list(params.keys())
         values = list(params.values())
-        reply = await send_request(
-            self.host,
-            self.port,
-            self.key,
+        reply = await self._send_with_version_fallback(
             {"t": "cmd", "mac": self.mac, "opt": opt, "p": values},
-            timeout=self.timeout,
-            version=self.version,
         )
         if reply.get("t") != "res":
             raise EwpeProtocolError(f"Unexpected cmd reply: {reply!r}")
