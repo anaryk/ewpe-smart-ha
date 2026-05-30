@@ -25,6 +25,7 @@ from .protocol import (
     EwpeProtocolError,
     EwpeTimeout,
     append_silent_buzzer,
+    parse_cmd_reply,
     scan,
     scan_then_bind,
     send_request,
@@ -217,13 +218,7 @@ class EwpeDevice:
         reply = await self._send_with_version_fallback(
             {"t": "cmd", "mac": self.mac, "opt": opt, "p": values},
         )
-        if reply.get("t") != "res":
-            raise EwpeProtocolError(f"Unexpected cmd reply: {reply!r}")
-        if not isinstance(reply.get("opt"), list) or not isinstance(
-            reply.get("val"), list
-        ):
-            raise EwpeProtocolError(f"Cmd reply is malformed: {reply!r}")
-        result = dict(zip(reply["opt"], reply["val"], strict=False))
+        result = parse_cmd_reply(reply)
         return {k: result[k] for k in params if k in result}
 
 

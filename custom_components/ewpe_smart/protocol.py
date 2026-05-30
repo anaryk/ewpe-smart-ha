@@ -78,6 +78,24 @@ def append_silent_buzzer(opt: list[str], p: list[int]) -> None:
         p.append(BUZZER_SILENT)
 
 
+def parse_cmd_reply(reply: dict[str, Any]) -> dict[str, int]:
+    """Build ``{opt: value}`` from a ``t: res`` packet.
+
+    Some firmware echoes values in ``val``; others reuse ``p`` (as in the request).
+    """
+    if reply.get("t") != "res":
+        raise EwpeProtocolError(f"Unexpected cmd reply: {reply!r}")
+    opt = reply.get("opt")
+    if not isinstance(opt, list):
+        raise EwpeProtocolError(f"Cmd reply is malformed: {reply!r}")
+    values = reply.get("val")
+    if not isinstance(values, list):
+        values = reply.get("p")
+    if not isinstance(values, list):
+        raise EwpeProtocolError(f"Cmd reply is malformed: {reply!r}")
+    return dict(zip(opt, values, strict=False))
+
+
 def _aes_ecb(key: bytes) -> Cipher:
     # ECB is mandated by the V1 device protocol — the wire format predates
     # modern cipher modes. V2 uses GCM via AESGCM below.

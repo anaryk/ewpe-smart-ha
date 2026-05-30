@@ -425,7 +425,10 @@ def cmd_set(
         print(f"[{ip}]   ✗ unexpected reply: {reply}")
         return 3
 
-    for name, value in zip(reply.get("opt") or [], reply.get("val") or [], strict=False):
+    values = reply.get("val")
+    if not isinstance(values, list):
+        values = reply.get("p")
+    for name, value in zip(reply.get("opt") or [], values or [], strict=False):
         print(f"[{ip}]     {name} = {value}")
     return 0
 

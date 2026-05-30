@@ -8,12 +8,39 @@ from custom_components.ewpe_smart.const import GENERIC_KEY_V2
 from custom_components.ewpe_smart.const import PARAM_BUZZER_ON_OFF
 from custom_components.ewpe_smart.protocol import (
     EwpeAuthError,
+    EwpeProtocolError,
     append_silent_buzzer,
     decrypt,
     decrypt_v2,
     encrypt,
     encrypt_v2,
+    parse_cmd_reply,
 )
+
+
+def test_parse_cmd_reply_accepts_val_or_p() -> None:
+    with_val = {
+        "t": "res",
+        "mac": "580d0df2deaf",
+        "opt": ["Lig"],
+        "val": [0],
+        "r": 200,
+    }
+    assert parse_cmd_reply(with_val) == {"Lig": 0}
+
+    with_p = {
+        "t": "res",
+        "mac": "580d0df2deaf",
+        "opt": ["Lig", "Buzzer_ON_OFF"],
+        "p": [0, 1],
+        "r": 200,
+    }
+    assert parse_cmd_reply(with_p) == {"Lig": 0, "Buzzer_ON_OFF": 1}
+
+
+def test_parse_cmd_reply_rejects_missing_values() -> None:
+    with pytest.raises(EwpeProtocolError):
+        parse_cmd_reply({"t": "res", "mac": "aa", "opt": ["Pow"]})
 
 
 def test_append_silent_buzzer_adds_param_once() -> None:
