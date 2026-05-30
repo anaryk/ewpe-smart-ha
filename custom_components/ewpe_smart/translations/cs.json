@@ -60,6 +60,32 @@
       "indoor_temperature": {
         "name": "Teplota v místnosti"
       }
+    },
+    "switch": {
+      "sleep": {
+        "name": "Spánek"
+      },
+      "turbo": {
+        "name": "Turbo"
+      },
+      "quiet": {
+        "name": "Tichý režim"
+      },
+      "xfan": {
+        "name": "X-Fan"
+      },
+      "health": {
+        "name": "Zdraví"
+      },
+      "display_light": {
+        "name": "Displej"
+      },
+      "energy_save": {
+        "name": "Úspora energie"
+      },
+      "fresh_air": {
+        "name": "Přívod čerstvého vzduchu"
+      }
     }
   }
 }
