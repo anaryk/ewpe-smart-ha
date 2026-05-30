@@ -173,11 +173,40 @@ def _send_request(
         sock.sendto(packet, (ip, PORT))
         data, addr = sock.recvfrom(4096)
         envelope = json.loads(data.decode("utf-8"))
-        reply = _parse_envelope(envelope, key)
-        print(f"[{ip}] ← reply from {addr[0]}:{addr[1]}")
+        try:
+            reply = _parse_envelope(envelope, key)
+        except Exception as err:
+            raise ValueError(f"decrypt failed: {err}") from err
+        print(f"[{ip}] ← reply from {addr[0]}:{addr[1]} (proto v{version})")
         return reply
     finally:
         sock.close()
+
+
+def _send_request_auto(
+    ip: str,
+    key: bytes,
+    inner: dict,
+    *,
+    mac: str,
+    version: int | None = None,
+) -> dict:
+    """Send a device-key request, trying v1 then v2 when version is omitted."""
+    versions = (version,) if version is not None else (1, 2)
+    for idx, try_version in enumerate(versions):
+        if version is None and len(versions) > 1:
+            print(f"[{ip}] → trying proto v{try_version}...")
+        try:
+            return _send_request(ip, key, inner, try_version, mac=mac)
+        except TimeoutError:
+            if version is not None or idx == len(versions) - 1:
+                raise
+            print(f"[{ip}]   ✗ v{try_version}: no reply within {TIMEOUT}s")
+        except (OSError, json.JSONDecodeError, ValueError) as err:
+            if version is not None or idx == len(versions) - 1:
+                raise
+            print(f"[{ip}]   ✗ v{try_version}: {err}")
+    raise TimeoutError(f"no reply from {ip} on any protocol version")
 
 
 def bind(ip: str, mac: str, sock: socket.socket | None = None) -> int:
@@ -216,8 +245,18 @@ def bind(ip: str, mac: str, sock: socket.socket | None = None) -> int:
             )
             print(f"[{ip}]   inner: {inner}")
             if inner.get("t") == "bindok" and inner.get("key"):
-                print(f"[{ip}]   ✓ bind OK (device key received)")
-                print(f"[{ip}]   key: {inner['key']}")
+                device_key = inner["key"]
+                print(f"[{ip}]   ✓ bind OK (device key received, proto v{version})")
+                print(f"[{ip}]   key: {device_key}")
+                print(
+                    f"[{ip}]   next: python3 tools/probe.py status {ip} "
+                    f"--key '{device_key}' --mac '{mac}'"
+                )
+                if version == 2:
+                    print(
+                        f"[{ip}]   note: hybrid firmware — encrypted traffic uses proto v2 "
+                        "(auto-detected if --version omitted)"
+                    )
                 return 0
             print(f"[{ip}]   ✗ unexpected bind reply")
             return 6
@@ -298,19 +337,23 @@ def probe(ip: str, decrypt: bool, do_bind: bool) -> int:
         sock.close()
 
 
-def cmd_status(ip: str, key: str, mac: str, version: int) -> int:
+def cmd_status(
+    ip: str, key: str, mac: str, version: int | None, cols: list[str] | None = None
+) -> int:
     device_key = key.encode("utf-8")
-    print(f"[{ip}] → status request ({len(STATUS_PARAMS)} cols, proto v{version})")
+    asked = cols or STATUS_PARAMS
+    version_label = f"v{version}" if version else "auto"
+    print(f"[{ip}] → status request ({len(asked)} cols, proto {version_label})")
     try:
-        reply = _send_request(
+        reply = _send_request_auto(
             ip,
             device_key,
-            {"t": "status", "mac": mac, "cols": STATUS_PARAMS},
-            version,
+            {"t": "status", "mac": mac, "cols": asked},
             mac=mac,
+            version=version,
         )
     except TimeoutError:
-        print(f"[{ip}]   ✗ no reply within {TIMEOUT}s")
+        print(f"[{ip}]   ✗ no reply within {TIMEOUT}s on any protocol version")
         return 1
     except (OSError, json.JSONDecodeError, ValueError) as err:
         print(f"[{ip}]   ✗ status failed: {err}")
@@ -325,6 +368,8 @@ def cmd_status(ip: str, key: str, mac: str, version: int) -> int:
     print(f"[{ip}]   cols ({len(cols)}): {cols}")
     for name, value in zip(cols, dat, strict=False):
         print(f"[{ip}]     {name} = {value}")
+    missing = [c for c in asked if c not in cols]
+    print(f"[{ip}]   dropped from reply: {missing or '(none)'}")
     switch_cols = [c for c in cols if c in STATUS_PARAMS[6:]]
     if switch_cols:
         print(f"[{ip}]   supported switches: {', '.join(switch_cols)}")
@@ -343,21 +388,24 @@ def _parse_params(values: list[str]) -> dict[str, int]:
     return params
 
 
-def cmd_set(ip: str, key: str, mac: str, version: int, params: dict[str, int]) -> int:
+def cmd_set(
+    ip: str, key: str, mac: str, version: int | None, params: dict[str, int]
+) -> int:
     device_key = key.encode("utf-8")
     opt = list(params.keys())
     values = list(params.values())
-    print(f"[{ip}] → set {dict(zip(opt, values, strict=True))} (proto v{version})")
+    version_label = f"v{version}" if version else "auto"
+    print(f"[{ip}] → set {dict(zip(opt, values, strict=True))} (proto {version_label})")
     try:
-        reply = _send_request(
+        reply = _send_request_auto(
             ip,
             device_key,
             {"t": "cmd", "mac": mac, "opt": opt, "p": values},
-            version,
             mac=mac,
+            version=version,
         )
     except TimeoutError:
-        print(f"[{ip}]   ✗ no reply within {TIMEOUT}s")
+        print(f"[{ip}]   ✗ no reply within {TIMEOUT}s on any protocol version")
         return 1
     except (OSError, json.JSONDecodeError, ValueError) as err:
         print(f"[{ip}]   ✗ set failed: {err}")
@@ -380,8 +428,8 @@ def _add_device_args(parser: argparse.ArgumentParser) -> None:
         "--version",
         type=int,
         choices=(1, 2),
-        default=1,
-        help="Protocol version (default: 1)",
+        default=None,
+        help="Protocol version for encrypted traffic (default: auto — try v1 then v2)",
     )
 
 
@@ -430,6 +478,13 @@ def main(argv: list[str]) -> int:
 
     status_parser = subparsers.add_parser("status", help="Read device status")
     _add_device_args(status_parser)
+    status_parser.add_argument(
+        "cols",
+        nargs="*",
+        metavar="Col",
+        help="Params to ask for (default: the integration's STATUS_PARAMS). "
+        "Pass a name the unit cannot have to see whether it drops unknown cols.",
+    )
 
     set_parser = subparsers.add_parser("set", help="Set device parameters")
     _add_device_args(set_parser)
@@ -451,7 +506,7 @@ def main(argv: list[str]) -> int:
         return rc
 
     if args.command == "status":
-        return cmd_status(args.ip, args.key, args.mac, args.version)
+        return cmd_status(args.ip, args.key, args.mac, args.version, args.cols)
 
     try:
         params = _parse_params(args.params)
