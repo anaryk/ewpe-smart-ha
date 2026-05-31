@@ -30,7 +30,6 @@ from .const import (
     DOMAIN,
     MAX_UPDATE_INTERVAL,
     MIN_UPDATE_INTERVAL,
-    PROTO_V1,
 )
 from .device import (
     EwpeAuthError,
@@ -44,16 +43,9 @@ from .device import (
 _LOGGER = logging.getLogger(__name__)
 
 
-async def _bind_device(host: str, version: int | None = None) -> EwpeDevice:
-    """Instantiate an :class:`EwpeDevice` and run the bind handshake.
-
-    When ``version`` is supplied (from a prior scan reply) the device skips
-    auto-detection and uses that protocol immediately. Otherwise it falls
-    through unicast scan first.
-    """
+async def _bind_device(host: str) -> EwpeDevice:
+    """Instantiate an :class:`EwpeDevice` and run scan+bind on one UDP session."""
     device = EwpeDevice(host=host)
-    if version is not None:
-        device.version = version
     await device.bind()
     return device
 
@@ -160,18 +152,15 @@ class EwpeSmartConfigFlow(ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             host = user_input[CONF_HOST]
-            scan_version = next(
-                (
-                    d.get("_version", PROTO_V1)
-                    for d in getattr(self, "_discovered", [])
-                    if d.get("address") == host
-                ),
-                None,
-            )
             try:
-                device = await _bind_device(host, version=scan_version)
-            except EwpeError:
+                device = await _bind_device(host)
+            except EwpeTimeout:
                 errors["base"] = "cannot_connect"
+            except (EwpeAuthError, EwpeProtocolError):
+                errors["base"] = "invalid_response"
+            except EwpeError:
+                _LOGGER.exception("Unexpected EWPE error during pick-device bind")
+                errors["base"] = "unknown"
             else:
                 await self.async_set_unique_id(device.mac)
                 self._abort_if_unique_id_configured()

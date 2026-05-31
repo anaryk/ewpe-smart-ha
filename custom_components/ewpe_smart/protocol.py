@@ -36,6 +36,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from .const import (
+    DEFAULT_BIND_TIMEOUT,
     DEFAULT_TIMEOUT,
     GCM_AAD,
     GCM_NONCE,
@@ -68,15 +69,47 @@ class EwpeAuthError(EwpeError):
     """Raised when a reply cannot be decrypted with the supplied key."""
 
 
+def parse_cmd_reply(reply: dict[str, Any]) -> dict[str, int]:
+    """Build ``{opt: value}`` from a ``t: res`` packet.
+
+    Some firmware echoes values in ``val``; others reuse ``p`` (as in the request).
+    """
+    if reply.get("t") != "res":
+        raise EwpeProtocolError(f"Unexpected cmd reply: {reply!r}")
+    opt = reply.get("opt")
+    if not isinstance(opt, list):
+        raise EwpeProtocolError(f"Cmd reply is malformed: {reply!r}")
+    values = reply.get("val")
+    if not isinstance(values, list):
+        values = reply.get("p")
+    if not isinstance(values, list):
+        raise EwpeProtocolError(f"Cmd reply is malformed: {reply!r}")
+    return dict(zip(opt, values, strict=False))
+
+
 def _aes_ecb(key: bytes) -> Cipher:
     # ECB is mandated by the V1 device protocol — the wire format predates
     # modern cipher modes. V2 uses GCM via AESGCM below.
     return Cipher(algorithms.AES(key), modes.ECB())  # nosec B305
 
 
+def _json_bytes(payload: dict[str, Any]) -> bytes:
+    """Serialize inner payloads like greeclimate / the Gree+ app (spaced JSON)."""
+    return json.dumps(payload).encode("utf-8")
+
+
+def _parse_json_bytes(data: bytes) -> dict[str, Any]:
+    """Parse decrypted JSON, ignoring trailing padding bytes some firmware adds."""
+    text = data.decode("utf-8", errors="replace")
+    last = text.rfind("}")
+    if last >= 0:
+        text = text[: last + 1]
+    return json.loads(text)
+
+
 def encrypt(payload: dict[str, Any], key: bytes = GENERIC_KEY) -> str:
     """V1: AES-128 ECB encrypt ``payload`` and return base64 ASCII."""
-    plaintext = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+    plaintext = _json_bytes(payload)
     padder = padding.PKCS7(_BLOCK_BITS).padder()
     padded = padder.update(plaintext) + padder.finalize()
     encryptor = _aes_ecb(key).encryptor()
@@ -97,14 +130,14 @@ def decrypt(ciphertext: str, key: bytes = GENERIC_KEY) -> dict[str, Any]:
     except ValueError as err:
         raise EwpeAuthError("Failed to decrypt payload") from err
     try:
-        return json.loads(decoded.decode("utf-8"))
+        return _parse_json_bytes(decoded)
     except (UnicodeDecodeError, json.JSONDecodeError) as err:
         raise EwpeAuthError("Decrypted payload is not valid JSON") from err
 
 
 def encrypt_v2(payload: dict[str, Any], key: bytes = GENERIC_KEY_V2) -> tuple[str, str]:
     """V2: AES-128 GCM encrypt ``payload`` → ``(pack_b64, tag_b64)``."""
-    plaintext = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+    plaintext = _json_bytes(payload)
     aesgcm = AESGCM(key)
     ct_with_tag = aesgcm.encrypt(GCM_NONCE, plaintext, GCM_AAD)
     ciphertext = ct_with_tag[:-_GCM_TAG_BYTES]
@@ -140,8 +173,15 @@ def decrypt_v2(
         raise EwpeAuthError("Decrypted V2 payload is not valid JSON") from err
 
 
-def _outer_packet(inner: dict[str, Any], key: bytes, version: int = PROTO_V1) -> bytes:
+def _outer_packet(
+    inner: dict[str, Any],
+    key: bytes,
+    version: int = PROTO_V1,
+    *,
+    tcid: str = "",
+) -> bytes:
     """Wrap ``inner`` in the outer envelope and serialise to bytes."""
+    device_tcid = tcid or str(inner.get("mac", ""))
     if version == PROTO_V2:
         pack, tag = encrypt_v2(inner, key)
         envelope: dict[str, Any] = {
@@ -149,7 +189,7 @@ def _outer_packet(inner: dict[str, Any], key: bytes, version: int = PROTO_V1) ->
             "i": 1 if key == GENERIC_KEY_V2 else 0,
             "t": "pack",
             "uid": 0,
-            "tcid": "",
+            "tcid": device_tcid,
             "pack": pack,
             "tag": tag,
         }
@@ -159,7 +199,7 @@ def _outer_packet(inner: dict[str, Any], key: bytes, version: int = PROTO_V1) ->
             "i": 1 if key == GENERIC_KEY else 0,
             "t": "pack",
             "uid": 0,
-            "tcid": "",
+            "tcid": device_tcid,
             "pack": encrypt(inner, key),
         }
     return json.dumps(envelope, separators=(",", ":")).encode("utf-8")
@@ -177,13 +217,15 @@ class _RequestProtocol(asyncio.DatagramProtocol):
         if not self.future.done():
             self.future.set_result((data, addr))
 
-    def error_received(self, exc: Exception) -> None:
-        if not self.future.done():
-            self.future.set_exception(exc)
 
-    def connection_lost(self, exc: Exception | None) -> None:
-        if not self.future.done() and exc is not None:
-            self.future.set_exception(exc)
+class _SessionProtocol(asyncio.DatagramProtocol):
+    """Collects multiple replies on one socket (scan then bind)."""
+
+    def __init__(self) -> None:
+        self.replies: list[tuple[bytes, tuple[str, int]]] = []
+
+    def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
+        self.replies.append((data, addr))
 
 
 class _BroadcastProtocol(asyncio.DatagramProtocol):
@@ -216,7 +258,12 @@ async def send_request(
     inner, _v = await _send_raw(
         host,
         port,
-        _outer_packet(payload, key, version),
+        _outer_packet(
+            payload,
+            key,
+            version,
+            tcid=str(payload.get("mac", "")),
+        ),
         reply_key=key,
         reply_version=version,
         timeout=timeout,
@@ -263,6 +310,118 @@ async def _send_raw(
     finally:
         transport.close()
     return _parse_reply(data, reply_key, reply_version)
+
+
+async def _session_exchange(
+    host: str,
+    port: int,
+    packets: list[bytes],
+    timeout: float,
+) -> list[bytes]:
+    """Send ``packets`` in order on one socket and wait for one reply each."""
+    loop = asyncio.get_running_loop()
+    transport, protocol = await loop.create_datagram_endpoint(
+        _SessionProtocol, remote_addr=(host, port)
+    )
+    replies: list[bytes] = []
+    try:
+        for packet in packets:
+            before = len(protocol.replies)
+            transport.sendto(packet)
+            deadline = loop.time() + timeout
+            while len(protocol.replies) <= before:
+                remaining = deadline - loop.time()
+                if remaining <= 0:
+                    raise EwpeTimeout(
+                        f"No reply from {host}:{port} in {timeout}s"
+                    )
+                await asyncio.sleep(min(0.05, remaining))
+            replies.append(protocol.replies[before][0])
+    finally:
+        transport.close()
+    return replies
+
+
+async def scan_then_bind(
+    host: str,
+    port: int,
+    timeout: float = DEFAULT_TIMEOUT,
+    bind_timeout: float = DEFAULT_BIND_TIMEOUT,
+    version: int | None = None,
+) -> tuple[dict[str, Any], int, dict[str, Any]]:
+    """Unicast scan and bind on one socket.
+
+    Many Gree units (including some that reply to scan with a V1-style
+    envelope) only accept the bind handshake over V2 (AES-GCM). When the
+    first bind attempt times out we fall back to the other protocol, matching
+    ``greeclimate`` behaviour.
+    """
+    scan_packet = json.dumps({"t": "scan"}).encode("utf-8")
+    loop = asyncio.get_running_loop()
+    transport, protocol = await loop.create_datagram_endpoint(
+        _SessionProtocol, remote_addr=(host, port)
+    )
+
+    async def _await_reply(before: int, wait: float) -> bytes:
+        deadline = loop.time() + wait
+        while len(protocol.replies) <= before:
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                raise EwpeTimeout(f"No reply from {host}:{port} in {wait}s")
+            await asyncio.sleep(min(0.05, remaining))
+        return protocol.replies[before][0]
+
+    try:
+        transport.sendto(scan_packet)
+        scan_data = await _await_reply(0, timeout)
+        dev_reply, detected = _parse_reply(scan_data)
+        if dev_reply.get("t") != "dev":
+            raise EwpeProtocolError(f"Unexpected scan reply: {dev_reply!r}")
+        mac = dev_reply.get("cid") or dev_reply.get("mac")
+        if not mac:
+            raise EwpeProtocolError("Scan reply contains no MAC")
+
+        if version is None:
+            versions_to_try = (
+                [PROTO_V2, PROTO_V1] if detected == PROTO_V2 else [PROTO_V1, PROTO_V2]
+            )
+        elif version == PROTO_V2:
+            versions_to_try = [PROTO_V2, PROTO_V1]
+        else:
+            versions_to_try = [PROTO_V1, PROTO_V2]
+
+        last_timeout: EwpeTimeout | None = None
+        for try_version in versions_to_try:
+            bind_key = GENERIC_KEY_V2 if try_version == PROTO_V2 else GENERIC_KEY
+            bind_packet = _outer_packet(
+                {"t": "bind", "mac": mac, "uid": 0},
+                bind_key,
+                try_version,
+                tcid=str(mac),
+            )
+            before = len(protocol.replies)
+            transport.sendto(bind_packet)
+            try:
+                bind_data = await _await_reply(before, bind_timeout)
+            except EwpeTimeout as err:
+                _LOGGER.debug(
+                    "Bind attempt on %s:%s using proto v%d timed out",
+                    host,
+                    port,
+                    try_version,
+                )
+                last_timeout = err
+                continue
+            bind_reply, _ = _parse_reply(bind_data, bind_key, try_version)
+            if bind_reply.get("t") == "bindok":
+                return dev_reply, try_version, bind_reply
+            raise EwpeProtocolError(f"Unexpected bind reply: {bind_reply!r}")
+
+        if last_timeout is not None:
+            raise last_timeout
+        raise EwpeTimeout(f"No reply from {host}:{port} in {bind_timeout}s")
+    finally:
+        transport.close()
 
 
 def _parse_reply(

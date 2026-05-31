@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN
+from .const import CONF_VERSION, DOMAIN, PROTO_V1
 from .device import EwpeAuthError, EwpeDevice, EwpeError
 
 _LOGGER = logging.getLogger(__name__)
@@ -34,6 +34,22 @@ class EwpeCoordinator(DataUpdateCoordinator[dict[str, int]]):
             config_entry=entry,
         )
         self.device = device
+        device.on_version_changed = self._persist_protocol_version
+
+    def _persist_protocol_version(self, version: int) -> None:
+        """Write an auto-detected protocol version back to the config entry."""
+        stored = self.config_entry.data.get(CONF_VERSION, PROTO_V1)
+        if stored == version:
+            return
+        self.hass.config_entries.async_update_entry(
+            self.config_entry,
+            data={**self.config_entry.data, CONF_VERSION: version},
+        )
+        _LOGGER.info(
+            "Updated stored protocol version to v%d for %s",
+            version,
+            self.device.host,
+        )
 
     async def _async_update_data(self) -> dict[str, int]:
         try:
