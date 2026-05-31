@@ -60,6 +60,32 @@
       "indoor_temperature": {
         "name": "Indoor temperature"
       }
+    },
+    "switch": {
+      "sleep": {
+        "name": "Sleep"
+      },
+      "turbo": {
+        "name": "Turbo"
+      },
+      "quiet": {
+        "name": "Quiet"
+      },
+      "xfan": {
+        "name": "X-Fan"
+      },
+      "health": {
+        "name": "Health"
+      },
+      "display_light": {
+        "name": "Display light"
+      },
+      "energy_save": {
+        "name": "Energy save"
+      },
+      "fresh_air": {
+        "name": "Fresh air"
+      }
     }
   }
 }

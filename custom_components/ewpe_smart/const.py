@@ -7,11 +7,12 @@ from homeassistant.const import Platform
 DOMAIN = "ewpe_smart"
 MANUFACTURER = "Gree (EWPE Smart)"
 
-PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.SENSOR]
+PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.SENSOR, Platform.SWITCH]
 
 # Network
 DEFAULT_PORT = 7000
 DEFAULT_TIMEOUT = 5.0
+DEFAULT_BIND_TIMEOUT = 10.0
 DEFAULT_BROADCAST = "255.255.255.255"
 DEFAULT_SCAN_TIMEOUT = 3.0
 
@@ -54,13 +55,34 @@ PARAM_TEMP_UNIT = "TemUn"
 PARAM_FAN_SPEED = "WdSpd"
 PARAM_TEMP_SENSOR = "TemSen"
 
-PHASE1_PARAMS: list[str] = [
+PARAM_SLEEP = "SwhSlp"
+PARAM_TUR = "Tur"
+PARAM_QUIET = "Quiet"
+PARAM_BLO = "Blo"
+PARAM_HEALTH = "Health"
+PARAM_LIG = "Lig"
+PARAM_SVST = "SvSt"
+PARAM_AIR = "Air"
+
+SWITCH_PARAMS: list[str] = [
+    PARAM_SLEEP,
+    PARAM_TUR,
+    PARAM_QUIET,
+    PARAM_BLO,
+    PARAM_HEALTH,
+    PARAM_LIG,
+    PARAM_SVST,
+    PARAM_AIR,
+]
+
+STATUS_PARAMS: list[str] = [
     PARAM_POWER,
     PARAM_MODE,
     PARAM_SET_TEMP,
     PARAM_TEMP_UNIT,
     PARAM_FAN_SPEED,
     PARAM_TEMP_SENSOR,
+    *SWITCH_PARAMS,
 ]
 
 # ── Value mappings ─────────────────────────────────────────────────────────

@@ -31,8 +31,22 @@ def patch_bind_success() -> Generator[None, None, None]:
         self.mac = self.mac or "AA:BB:CC:DD:EE:FF"
         self.name = self.name or "MockAC"
         self.key = self.key or b"abcdefghijklmnop"
+        self.version = self.version or 1
 
-    with patch.object(EwpeDevice, "bind", fake_bind):
+    async def fake_get_status(self: EwpeDevice, cols=None):  # noqa: ANN001
+        return {
+            "Pow": 1,
+            "Mod": 1,
+            "SetTem": 22,
+            "TemUn": 0,
+            "WdSpd": 0,
+            "TemSen": 25,
+        }
+
+    with (
+        patch.object(EwpeDevice, "bind", fake_bind),
+        patch.object(EwpeDevice, "get_status", fake_get_status),
+    ):
         yield
 
 
