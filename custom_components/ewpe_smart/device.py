@@ -60,27 +60,49 @@ class EwpeDevice:
             self.host,
             self.port,
         )
-        reply = await send_request(
-            self.host,
-            self.port,
-            _generic_key_for(self.version),
-            {"mac": self.mac, "t": "bind", "uid": 0},
-            timeout=self.timeout,
-            version=self.version,
-        )
-        if reply.get("t") != "bindok":
-            raise EwpeProtocolError(f"Unexpected bind reply: {reply!r}")
-        key = reply.get("key")
-        if not isinstance(key, str) or not key:
-            raise EwpeProtocolError("Bind reply contains no usable key")
-        self.key = key.encode("utf-8")
-        _LOGGER.info(
-            "Bound device %s (%s, proto v%d) on %s",
-            self.name,
-            self.mac,
-            self.version,
-            self.host,
-        )
+
+        tried_versions = [self.version]
+        if self.version == PROTO_V1:
+            tried_versions.append(PROTO_V2)
+
+        last_exc = None
+        for ver in tried_versions:
+            try:
+                reply = await send_request(
+                    self.host,
+                    self.port,
+                    _generic_key_for(ver),
+                    {"mac": self.mac, "t": "bind", "uid": 0},
+                    timeout=self.timeout,
+                    version=ver,
+                )
+                if reply.get("t") != "bindok":
+                    last_exc = EwpeProtocolError(
+                        "Unexpected bind reply: %s", reply
+                    )
+                    continue
+                key = reply.get("key")
+                if not isinstance(key, str) or not key:
+                    last_exc = EwpeProtocolError(
+                        "Bind reply contains no usable key"
+                    )
+                    continue
+                self.key = key.encode("utf-8")
+                self.version = ver
+                _LOGGER.info(
+                    "Bound device %s (%s, proto v%d) on %s",
+                    self.name,
+                    self.mac,
+                    self.version,
+                    self.host,
+                )
+                break
+            except (EwpeAuthError, EwpeProtocolError, EwpeTimeout) as exc:
+                _LOGGER.warning("Bind with proto v%d failed: %s", ver, exc)
+                last_exc = exc
+                continue
+        else:
+            raise last_exc or EwpeProtocolError("All bind attempts failed")
 
     async def _discover(self) -> None:
         """Send a unicast scan to learn MAC, name, and protocol version."""
