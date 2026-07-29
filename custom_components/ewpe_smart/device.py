@@ -154,10 +154,10 @@ class EwpeDevice:
         if reply.get("t") != "res":
             raise EwpeProtocolError(f"Unexpected cmd reply: {reply!r}")
         if not isinstance(reply.get("opt"), list) or not isinstance(
-            reply.get("val"), list
+            reply.get("p"), list
         ):
             raise EwpeProtocolError(f"Cmd reply is malformed: {reply!r}")
-        return dict(zip(reply["opt"], reply["val"], strict=False))
+        return dict(zip(reply["opt"], reply["p"], strict=False))
 
 
 __all__ = [

@@ -152,7 +152,7 @@ class MockEwpeProtocol(asyncio.DatagramProtocol):
                 "t": "res",
                 "mac": self.mac,
                 "opt": opt,
-                "val": values,
+                "p": values,
             }
         return None
 
