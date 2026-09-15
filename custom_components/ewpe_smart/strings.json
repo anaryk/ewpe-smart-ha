@@ -42,6 +42,7 @@
     },
     "error": {
       "cannot_connect": "Could not reach the device on the supplied IP",
+      "device_refused": "The device refused the connection on UDP 7000. It is reachable, but nothing is listening on that port, most likely because local control is turned off in its wifi module. See the troubleshooting section in the README.",
       "invalid_response": "The device replied with an unexpected payload",
       "no_devices": "No devices were found on the network",
       "scan_failed": "Network scan failed",

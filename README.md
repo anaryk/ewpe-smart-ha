@@ -137,6 +137,27 @@ After setup, click **Configure** on the device card to change:
   Bridge networking will swallow UDP broadcast and may also break unicast in
   some configurations.
 
+### "The device refused the connection on UDP 7000"
+
+The unit answered with an ICMP port unreachable, so it is powered on and
+routable but has nothing bound to UDP/7000. This is not a firewall, a wrong IP
+or a protocol-version mismatch: the device itself said "no listener here".
+
+Recent Gree/Tosot/Sinclair wifi modules (firmware 2.x) ship with local control
+disabled, and the vendor app then runs everything through the cloud. Things to
+try, in order:
+
+1. Put the module in AP mode (usually the display's `Mode` + `WiFi` key
+   combination, see your manual) and re-pair the unit with the vendor app on
+   the local network. Some modules re-enable UDP/7000 after a fresh pairing.
+2. Check the vendor app for a "LAN control" / "local mode" toggle.
+3. Verify with a packet capture that a broadcast `{"t":"scan"}` gets any reply
+   at all. Zero replies means the module keeps local control off and no
+   integration can reach it.
+
+If none of that helps, the module has to be replaced with one that speaks the
+local protocol. There is nothing the integration can do from the HA side.
+
 ### "The device replied with an unexpected payload"
 
 This usually means the bind handshake succeeded but the device sent a status
