@@ -8,12 +8,14 @@ must be lifted via the ``socket_enabled`` fixture.
 from __future__ import annotations
 
 import asyncio
+import socket
 
 import pytest
 
 from custom_components.ewpe_smart.const import PROTO_V1, PROTO_V2
 from custom_components.ewpe_smart.device import EwpeDevice
 from custom_components.ewpe_smart.protocol import (
+    EwpeConnectionError,
     EwpeError,
     EwpeProtocolError,
     EwpeTimeout,
@@ -163,3 +165,26 @@ async def test_v2_bind_uses_v2_generic_key() -> None:
     await device.bind()
 
     assert device.key == mock.device_key
+
+
+def _closed_udp_port() -> int:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    sock.close()
+    return port
+
+
+@pytest.mark.asyncio
+async def test_unreachable_port_raises_ewpe_error() -> None:
+    """ICMP errors must surface as EwpeError, not a bare OSError."""
+    device = EwpeDevice(
+        host="127.0.0.1",
+        port=_closed_udp_port(),
+        mac="AA:BB:CC:DD:EE:FF",
+        key=b"abcdefghijklmnop",
+        timeout=2.0,
+    )
+
+    with pytest.raises(EwpeConnectionError):
+        await device.get_status()

@@ -19,6 +19,7 @@ from .const import (
 )
 from .protocol import (
     EwpeAuthError,
+    EwpeConnectionError,
     EwpeError,
     EwpeProtocolError,
     EwpeTimeout,
@@ -162,6 +163,7 @@ class EwpeDevice:
 
 __all__ = [
     "EwpeAuthError",
+    "EwpeConnectionError",
     "EwpeDevice",
     "EwpeError",
     "EwpeProtocolError",

@@ -61,5 +61,10 @@
         "name": "Teplota v místnosti"
       }
     }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Příkaz se nepodařilo odeslat do zařízení: {error}"
+    }
   }
 }

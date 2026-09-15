@@ -12,6 +12,7 @@ from homeassistant.components.climate import (
     FAN_MEDIUM,
     HVACMode,
 )
+from homeassistant.exceptions import HomeAssistantError
 
 from custom_components.ewpe_smart.climate import EwpeClimateEntity
 from custom_components.ewpe_smart.const import (
@@ -20,6 +21,7 @@ from custom_components.ewpe_smart.const import (
     PARAM_POWER,
     PARAM_SET_TEMP,
 )
+from custom_components.ewpe_smart.protocol import EwpeTimeout
 
 
 def _make_entity(status: dict[str, int]) -> tuple[EwpeClimateEntity, MagicMock]:
@@ -119,3 +121,12 @@ async def test_turn_on_off_shortcuts() -> None:
     device.set_state.assert_awaited_with({PARAM_POWER: 1})
     await entity.async_turn_off()
     device.set_state.assert_awaited_with({PARAM_POWER: 0})
+
+
+@pytest.mark.asyncio
+async def test_failed_command_raises_home_assistant_error() -> None:
+    entity, device = _make_entity({"Pow": 0})
+    device.set_state.side_effect = EwpeTimeout("no reply")
+    with pytest.raises(HomeAssistantError):
+        await entity.async_turn_on()
+    entity.coordinator.async_request_refresh.assert_not_awaited()

@@ -61,5 +61,10 @@
         "name": "Indoor temperature"
       }
     }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Failed to send the command to the device: {error}"
+    }
   }
 }

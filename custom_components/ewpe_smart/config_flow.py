@@ -34,6 +34,7 @@ from .const import (
 )
 from .device import (
     EwpeAuthError,
+    EwpeConnectionError,
     EwpeDevice,
     EwpeError,
     EwpeProtocolError,
@@ -84,7 +85,7 @@ class EwpeSmartConfigFlow(ConfigFlow, domain=DOMAIN):
             host = user_input[CONF_HOST]
             try:
                 device = await _bind_device(host)
-            except EwpeTimeout:
+            except (EwpeTimeout, EwpeConnectionError):
                 errors["base"] = "cannot_connect"
             except (EwpeAuthError, EwpeProtocolError):
                 errors["base"] = "invalid_response"

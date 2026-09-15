@@ -16,6 +16,7 @@ from homeassistant.components.climate import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -43,6 +44,7 @@ from .const import (
     POWER_ON,
 )
 from .coordinator import EwpeCoordinator
+from .device import EwpeError
 
 HVAC_MODE_TO_DEVICE: dict[HVACMode, int] = {
     HVACMode.AUTO: MODE_AUTO,
@@ -174,5 +176,12 @@ class EwpeClimateEntity(CoordinatorEntity[EwpeCoordinator], ClimateEntity):
         await self._send({PARAM_POWER: POWER_OFF})
 
     async def _send(self, params: dict[str, int]) -> None:
-        await self.coordinator.device.set_state(params)
+        try:
+            await self.coordinator.device.set_state(params)
+        except EwpeError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="command_failed",
+                translation_placeholders={"error": str(err)},
+            ) from err
         await self.coordinator.async_request_refresh()

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant import config_entries, data_entry_flow
@@ -15,6 +15,7 @@ from custom_components.ewpe_smart.const import (
     CONF_NAME,
     DOMAIN,
 )
+from custom_components.ewpe_smart.device import EwpeConnectionError, EwpeDevice
 
 pytestmark = pytest.mark.usefixtures("mock_setup_entry")
 
@@ -122,3 +123,22 @@ async def test_options_flow_persists_polling_interval(
         )
         assert result["type"] == data_entry_flow.FlowResultType.CREATE_ENTRY
         assert result["data"]["update_interval"] == 60
+
+
+@pytest.mark.asyncio
+async def test_manual_unreachable_shows_cannot_connect(hass: HomeAssistant) -> None:
+    """ICMP errors (e.g. wrong IP) are a connection problem, not an unknown error."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "manual"}
+    )
+    with patch.object(
+        EwpeDevice, "bind", AsyncMock(side_effect=EwpeConnectionError("refused"))
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: "10.0.0.99"}
+        )
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
+    assert result["errors"] == {"base": "cannot_connect"}
