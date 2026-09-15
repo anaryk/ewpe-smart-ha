@@ -16,6 +16,8 @@ from custom_components.ewpe_smart.const import (
     DOMAIN,
 )
 
+pytestmark = pytest.mark.usefixtures("mock_setup_entry")
+
 
 @pytest.mark.asyncio
 async def test_user_to_manual_to_create_entry(

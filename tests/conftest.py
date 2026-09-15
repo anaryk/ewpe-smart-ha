@@ -37,6 +37,13 @@ def patch_bind_success() -> Generator[None, None, None]:
 
 
 @pytest.fixture
+def mock_setup_entry() -> Generator[None, None, None]:
+    """Skip integration setup after a flow creates an entry."""
+    with patch("custom_components.ewpe_smart.async_setup_entry", return_value=True):
+        yield
+
+
+@pytest.fixture
 def patch_bind_timeout() -> Generator[None, None, None]:
     """Stub out ``EwpeDevice.bind`` to raise a timeout."""
     from custom_components.ewpe_smart.device import EwpeDevice
