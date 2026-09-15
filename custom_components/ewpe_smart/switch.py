@@ -7,27 +7,24 @@ from dataclasses import dataclass
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
-    DOMAIN,
-    MANUFACTURER,
     PARAM_AIR,
     PARAM_BLO,
     PARAM_HEALTH,
     PARAM_LIG,
     PARAM_QUIET,
     PARAM_SLEEP,
+    PARAM_SLEEP_MODE,
     PARAM_SVST,
     PARAM_TUR,
     POWER_OFF,
     POWER_ON,
 )
-from .coordinator import EwpeCoordinator
+from .coordinator import EwpeConfigEntry, EwpeCoordinator
+from .entity import EwpeEntity
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -37,11 +34,16 @@ class EwpeSwitchDescription:
     param: str
     unique_id_suffix: str
     translation_key: str
+    # Params written alongside ``param``, but never read back.
+    also_writes: tuple[str, ...] = ()
 
 
 SWITCH_DESCRIPTIONS: tuple[EwpeSwitchDescription, ...] = (
     EwpeSwitchDescription(
-        param=PARAM_SLEEP, unique_id_suffix="sleep", translation_key="sleep"
+        param=PARAM_SLEEP,
+        unique_id_suffix="sleep",
+        translation_key="sleep",
+        also_writes=(PARAM_SLEEP_MODE,),
     ),
     EwpeSwitchDescription(
         param=PARAM_TUR, unique_id_suffix="turbo", translation_key="turbo"
@@ -80,41 +82,28 @@ def supported_switch_descriptions(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: EwpeConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Register switch entities supported by this device."""
-    coordinator: EwpeCoordinator = hass.data[DOMAIN][entry.entry_id]
-    data = coordinator.data or {}
+    coordinator = entry.runtime_data
     async_add_entities(
-        EwpeSwitchEntity(coordinator, entry, description)
-        for description in supported_switch_descriptions(data)
+        EwpeSwitchEntity(coordinator, description)
+        for description in supported_switch_descriptions(coordinator.data or {})
     )
 
 
-class EwpeSwitchEntity(CoordinatorEntity[EwpeCoordinator], SwitchEntity):
+class EwpeSwitchEntity(EwpeEntity, SwitchEntity):
     """Binary switch backed by a single Gree protocol parameter."""
-
-    _attr_has_entity_name = True
 
     def __init__(
         self,
         coordinator: EwpeCoordinator,
-        entry: ConfigEntry,
         description: EwpeSwitchDescription,
     ) -> None:
-        super().__init__(coordinator)
+        super().__init__(coordinator, description.unique_id_suffix)
         self._description = description
-        device = coordinator.device
         self._attr_translation_key = description.translation_key
-        self._attr_unique_id = f"{device.mac}_{description.unique_id_suffix}"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, device.mac or entry.entry_id)},
-            name=device.name or entry.title,
-            manufacturer=MANUFACTURER,
-            model=device.info.get("model") if device.info else None,
-            sw_version=device.info.get("ver") if device.info else None,
-        )
 
     @property
     def is_on(self) -> bool | None:
@@ -130,5 +119,7 @@ class EwpeSwitchEntity(CoordinatorEntity[EwpeCoordinator], SwitchEntity):
         await self._send(POWER_OFF)
 
     async def _send(self, value: int) -> None:
-        await self.coordinator.device.set_state({self._description.param: value})
+        params = {self._description.param: value}
+        params.update(dict.fromkeys(self._description.also_writes, value))
+        await self.coordinator.device.set_state(params)
         await self.coordinator.async_request_refresh()

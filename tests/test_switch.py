@@ -6,7 +6,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from custom_components.ewpe_smart.const import PARAM_LIG, PARAM_QUIET
+from custom_components.ewpe_smart.const import (
+    PARAM_LIG,
+    PARAM_QUIET,
+    PARAM_SLEEP,
+    PARAM_SLEEP_MODE,
+)
 from custom_components.ewpe_smart.switch import (
     EwpeSwitchEntity,
     supported_switch_descriptions,
@@ -32,11 +37,7 @@ def _make_switch(
     device.set_state = AsyncMock()
     coordinator.device = device
 
-    entry = MagicMock()
-    entry.entry_id = "abc"
-    entry.title = "Test"
-
-    entity = EwpeSwitchEntity(coordinator, entry, description)
+    entity = EwpeSwitchEntity(coordinator, description)
     return entity, device
 
 
@@ -67,3 +68,10 @@ async def test_turn_off_sends_param_zero() -> None:
     entity, device = _make_switch({"Lig": 1}, param=PARAM_LIG)
     await entity.async_turn_off()
     device.set_state.assert_awaited_once_with({PARAM_LIG: 0})
+
+
+@pytest.mark.asyncio
+async def test_sleep_also_writes_sleep_mode() -> None:
+    entity, device = _make_switch({"SwhSlp": 0}, param=PARAM_SLEEP)
+    await entity.async_turn_on()
+    device.set_state.assert_awaited_once_with({PARAM_SLEEP: 1, PARAM_SLEEP_MODE: 1})

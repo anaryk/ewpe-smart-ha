@@ -56,6 +56,9 @@ PARAM_FAN_SPEED = "WdSpd"
 PARAM_TEMP_SENSOR = "TemSen"
 
 PARAM_SLEEP = "SwhSlp"
+# Firmware keeps the sleep curve in SlpMod; SwhSlp alone is a no-op on some
+# units, so both are written together (greeclimate does the same).
+PARAM_SLEEP_MODE = "SlpMod"
 PARAM_TUR = "Tur"
 PARAM_QUIET = "Quiet"
 PARAM_BLO = "Blo"
