@@ -7,46 +7,34 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, MANUFACTURER, PARAM_TEMP_SENSOR
-from .coordinator import EwpeCoordinator
+from .const import PARAM_TEMP_SENSOR
+from .coordinator import EwpeConfigEntry, EwpeCoordinator
+from .entity import EwpeEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: EwpeConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: EwpeCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([EwpeIndoorTempSensor(coordinator, entry)])
+    """Register the indoor temperature sensor for this config entry."""
+    async_add_entities([EwpeIndoorTempSensor(entry.runtime_data)])
 
 
-class EwpeIndoorTempSensor(CoordinatorEntity[EwpeCoordinator], SensorEntity):
+class EwpeIndoorTempSensor(EwpeEntity, SensorEntity):
     """Reports the indoor temperature reading from the unit's TemSen sensor."""
 
-    _attr_has_entity_name = True
     _attr_translation_key = "indoor_temperature"
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
 
-    def __init__(self, coordinator: EwpeCoordinator, entry: ConfigEntry) -> None:
-        super().__init__(coordinator)
-        device = coordinator.device
-        self._attr_unique_id = f"{device.mac}_indoor_temperature"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, device.mac or entry.entry_id)},
-            name=device.name or entry.title,
-            manufacturer=MANUFACTURER,
-            model=device.info.get("model") if device.info else None,
-            sw_version=device.info.get("ver") if device.info else None,
-        )
+    def __init__(self, coordinator: EwpeCoordinator) -> None:
+        super().__init__(coordinator, "indoor_temperature")
 
     @property
     def native_value(self) -> float | None:

@@ -38,11 +38,7 @@ def _make_entity(status: dict[str, int]) -> tuple[EwpeClimateEntity, MagicMock]:
     device.set_state = AsyncMock()
     coordinator.device = device
 
-    entry = MagicMock()
-    entry.entry_id = "abc"
-    entry.title = "Test"
-
-    entity = EwpeClimateEntity(coordinator, entry)
+    entity = EwpeClimateEntity(coordinator)
     return entity, device
 
 
