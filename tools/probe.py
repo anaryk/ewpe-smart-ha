@@ -39,15 +39,21 @@ V2_NONCE = b"\x54\x40\x78\x44\x49\x67\x5a\x51\x6c\x5e\x63\x13"
 V2_AAD = b"qualcomm-test"
 
 
+def _aes_ecb(key: bytes):
+    # ECB is mandated by the V1 device protocol; the wire format predates
+    # modern cipher modes. V2 uses GCM below.
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+    return Cipher(algorithms.AES(key), modes.ECB())  # nosec B305
+
+
 def _encrypt_v1(payload: dict) -> str:
     from cryptography.hazmat.primitives import padding
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
     plaintext = json.dumps(payload).encode("utf-8")
     padder = padding.PKCS7(128).padder()
     padded = padder.update(plaintext) + padder.finalize()
-    cipher = Cipher(algorithms.AES(V1_KEY), modes.ECB())  # nosec B305
-    encryptor = cipher.encryptor()
+    encryptor = _aes_ecb(V1_KEY).encryptor()
     ciphertext = encryptor.update(padded) + encryptor.finalize()
     return base64.b64encode(ciphertext).decode("ascii")
 
@@ -67,11 +73,9 @@ def _encrypt_v2(payload: dict) -> tuple[str, str]:
 
 def _decrypt_v1(pack_b64: str, key: bytes = V1_KEY) -> dict:
     from cryptography.hazmat.primitives import padding
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
     raw = base64.b64decode(pack_b64)
-    cipher = Cipher(algorithms.AES(key), modes.ECB())  # nosec B305
-    decryptor = cipher.decryptor()
+    decryptor = _aes_ecb(key).decryptor()
     padded = decryptor.update(raw) + decryptor.finalize()
     unpadder = padding.PKCS7(128).unpadder()
     plain = unpadder.update(padded) + unpadder.finalize()
@@ -129,7 +133,6 @@ def bind(ip: str, mac: str, sock: socket.socket | None = None) -> int:
     if own_sock:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(BIND_TIMEOUT)
-        sock.bind(("", 0))
     versions = (1, 2)
     try:
         for version in versions:
