@@ -31,6 +31,13 @@
       "reauth_confirm": {
         "title": "Re-authenticate",
         "description": "The device key has been rejected. Power-cycle the unit if you've recently reset it, then click Submit to re-bind."
+      },
+      "reconfigure": {
+        "title": "Change IP address",
+        "description": "Enter the current IP address of the device. The key is re-fetched on save.",
+        "data": {
+          "host": "IP address"
+        }
       }
     },
     "error": {
@@ -42,7 +49,9 @@
     },
     "abort": {
       "already_configured": "This device is already configured",
-      "reauth_successful": "Re-authentication successful"
+      "reauth_successful": "Re-authentication successful",
+      "reconfigure_successful": "IP address updated",
+      "wrong_device": "That IP belongs to a different device"
     }
   },
   "options": {

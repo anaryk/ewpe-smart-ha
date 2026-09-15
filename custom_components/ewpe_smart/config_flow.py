@@ -195,6 +195,43 @@ class EwpeSmartConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Point an existing entry at a new IP address."""
+        entry = self._get_reconfigure_entry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            host = user_input[CONF_HOST]
+            try:
+                device = await _bind_device(host)
+            except (EwpeTimeout, EwpeConnectionError):
+                errors["base"] = "cannot_connect"
+            except (EwpeAuthError, EwpeProtocolError):
+                errors["base"] = "invalid_response"
+            except EwpeError:
+                _LOGGER.exception("Unexpected EWPE error during reconfigure bind")
+                errors["base"] = "unknown"
+            else:
+                await self.async_set_unique_id(device.mac)
+                self._abort_if_unique_id_mismatch(reason="wrong_device")
+                return self.async_update_reload_and_abort(
+                    entry,
+                    data_updates={
+                        CONF_HOST: host,
+                        CONF_KEY: device.key.decode("utf-8"),
+                        CONF_VERSION: device.version,
+                    },
+                )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema(
+                {vol.Required(CONF_HOST, default=entry.data[CONF_HOST]): str}
+            ),
+            errors=errors,
+        )
+
     async def async_step_reauth(self, _entry_data: dict[str, Any]) -> ConfigFlowResult:
         """Trigger reauth when the stored device key stops working."""
         self._reauth_entry = self.hass.config_entries.async_get_entry(
