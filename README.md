@@ -149,6 +149,13 @@ If you've reset the AC controller (factory reset, firmware update, etc.) the
 device-specific key stored by HA becomes invalid. HA will automatically prompt
 for re-authentication; just click through and the bind will be repeated.
 
+### Download diagnostics
+
+When opening an issue, attach the diagnostics file: **Settings → Devices &
+services → EWPE Smart → ⋮ → Download diagnostics**. It includes the detected
+protocol version, model/firmware info and the last status reply. The device
+key and MAC address are redacted.
+
 ### Enable debug logging
 
 Add this to your `configuration.yaml`:
@@ -181,7 +188,7 @@ If you want to hack on the integration:
 ```bash
 git clone https://github.com/anaryk/ewpe-smart-ha
 cd ewpe-smart-ha
-python3 -m venv .venv
+python3.14 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements_test.txt
 pytest -v
