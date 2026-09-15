@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import timedelta
 
 from homeassistant.core import HomeAssistant
 
@@ -63,5 +64,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: EwpeConfigEntry) -> boo
 
 
 async def _async_options_updated(hass: HomeAssistant, entry: EwpeConfigEntry) -> None:
-    """Reload the entry when the user changes options (e.g. polling interval)."""
+    """Reload the entry when the user changes options (e.g. polling interval).
+
+    The listener fires on every entry update, including the protocol-version
+    write-back from the coordinator. Reloading for that would tear the entry
+    down in the middle of a poll, so only an actual options change reloads.
+    """
+    coordinator: EwpeCoordinator | None = getattr(entry, "runtime_data", None)
+    interval = entry.options.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL)
+    if coordinator is not None and coordinator.update_interval == timedelta(
+        seconds=interval
+    ):
+        return
     await hass.config_entries.async_reload(entry.entry_id)

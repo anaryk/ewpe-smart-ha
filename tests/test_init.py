@@ -16,9 +16,11 @@ from custom_components.ewpe_smart.const import (
     CONF_MAC,
     CONF_NAME,
     CONF_PORT,
+    CONF_UPDATE_INTERVAL,
     CONF_VERSION,
     DOMAIN,
     PROTO_V1,
+    PROTO_V2,
 )
 from custom_components.ewpe_smart.coordinator import EwpeCoordinator
 from custom_components.ewpe_smart.protocol import EwpeTimeout
@@ -87,3 +89,30 @@ async def test_setup_retries_when_device_is_offline(hass: HomeAssistant) -> None
         entry = await _setup_entry(hass, port)
 
     assert entry.state is ConfigEntryState.SETUP_RETRY
+
+
+async def test_version_write_back_does_not_reload_entry(hass: HomeAssistant) -> None:
+    """Persisting an auto-detected protocol version must not reload mid-poll."""
+    _mock, port = await start_mock_device()
+    entry = await _setup_entry(hass, port)
+
+    with patch.object(hass.config_entries, "async_reload") as reload:
+        entry.runtime_data._persist_protocol_version(PROTO_V2)
+        await hass.async_block_till_done()
+
+    reload.assert_not_called()
+    assert entry.data[CONF_VERSION] == PROTO_V2
+
+
+async def test_changed_polling_interval_reloads_entry(hass: HomeAssistant) -> None:
+    """An actual options change still reloads the entry."""
+    _mock, port = await start_mock_device()
+    entry = await _setup_entry(hass, port)
+
+    with patch.object(hass.config_entries, "async_reload") as reload:
+        hass.config_entries.async_update_entry(
+            entry, options={CONF_UPDATE_INTERVAL: 60}
+        )
+        await hass.async_block_till_done()
+
+    reload.assert_called_once_with(entry.entry_id)

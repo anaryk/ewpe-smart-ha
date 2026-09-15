@@ -63,7 +63,9 @@ class EwpeDevice:
     def _alternate_version(self, version: int) -> int:
         return PROTO_V2 if version == PROTO_V1 else PROTO_V1
 
-    async def _send_with_version_fallback(self, payload: dict[str, Any]) -> dict[str, Any]:
+    async def _send_with_version_fallback(
+        self, payload: dict[str, Any]
+    ) -> dict[str, Any]:
         """Send an encrypted request, retrying on the other protocol version if needed."""
         try:
             return await send_request(

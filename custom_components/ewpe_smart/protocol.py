@@ -221,15 +221,35 @@ class _RequestProtocol(asyncio.DatagramProtocol):
         if not self.future.done():
             self.future.set_result((data, addr))
 
+    def error_received(self, exc: Exception) -> None:
+        if not self.future.done():
+            self.future.set_exception(exc)
+
+    def connection_lost(self, exc: Exception | None) -> None:
+        if not self.future.done() and exc is not None:
+            self.future.set_exception(exc)
+
 
 class _SessionProtocol(asyncio.DatagramProtocol):
     """Collects multiple replies on one socket (scan then bind)."""
 
     def __init__(self) -> None:
         self.replies: list[tuple[bytes, tuple[str, int]]] = []
+        self.received = asyncio.Event()
+        self.error: Exception | None = None
 
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
         self.replies.append((data, addr))
+        self.received.set()
+
+    def error_received(self, exc: Exception) -> None:
+        self.error = exc
+        self.received.set()
+
+    def connection_lost(self, exc: Exception | None) -> None:
+        if exc is not None:
+            self.error = exc
+        self.received.set()
 
 
 class _BroadcastProtocol(asyncio.DatagramProtocol):
@@ -321,36 +341,6 @@ async def _send_raw(
     return _parse_reply(data, reply_key, reply_version)
 
 
-async def _session_exchange(
-    host: str,
-    port: int,
-    packets: list[bytes],
-    timeout: float,
-) -> list[bytes]:
-    """Send ``packets`` in order on one socket and wait for one reply each."""
-    loop = asyncio.get_running_loop()
-    transport, protocol = await loop.create_datagram_endpoint(
-        _SessionProtocol, remote_addr=(host, port)
-    )
-    replies: list[bytes] = []
-    try:
-        for packet in packets:
-            before = len(protocol.replies)
-            transport.sendto(packet)
-            deadline = loop.time() + timeout
-            while len(protocol.replies) <= before:
-                remaining = deadline - loop.time()
-                if remaining <= 0:
-                    raise EwpeTimeout(
-                        f"No reply from {host}:{port} in {timeout}s"
-                    )
-                await asyncio.sleep(min(0.05, remaining))
-            replies.append(protocol.replies[before][0])
-    finally:
-        transport.close()
-    return replies
-
-
 async def scan_then_bind(
     host: str,
     port: int,
@@ -374,10 +364,20 @@ async def scan_then_bind(
     async def _await_reply(before: int, wait: float) -> bytes:
         deadline = loop.time() + wait
         while len(protocol.replies) <= before:
+            if protocol.error is not None:
+                raise EwpeConnectionError(
+                    f"Cannot reach {host}:{port}: {protocol.error}"
+                )
+            # No await between the length check and clear(), so a datagram
+            # cannot slip in and leave the event cleared behind our back.
+            protocol.received.clear()
             remaining = deadline - loop.time()
             if remaining <= 0:
                 raise EwpeTimeout(f"No reply from {host}:{port} in {wait}s")
-            await asyncio.sleep(min(0.05, remaining))
+            try:
+                await asyncio.wait_for(protocol.received.wait(), remaining)
+            except TimeoutError as err:
+                raise EwpeTimeout(f"No reply from {host}:{port} in {wait}s") from err
         return protocol.replies[before][0]
 
     try:

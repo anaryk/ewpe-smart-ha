@@ -133,7 +133,9 @@ def bind(ip: str, mac: str, sock: socket.socket | None = None) -> int:
     versions = (1, 2)
     try:
         for version in versions:
-            packet = _outer_packet({"t": "bind", "mac": mac, "uid": 0}, version, tcid=mac)
+            packet = _outer_packet(
+                {"t": "bind", "mac": mac, "uid": 0}, version, tcid=mac
+            )
             print(
                 f"[{ip}] → sending encrypted bind v{version} "
                 f"({len(packet)} B) to {ip}:{PORT}"
@@ -148,7 +150,9 @@ def bind(ip: str, mac: str, sock: socket.socket | None = None) -> int:
             envelope = json.loads(data.decode("utf-8"))
             reply_version = 2 if "tag" in envelope else 1
             inner = _parse_envelope(envelope, reply_version)
-            print(f"[{ip}] ← bind reply from {addr[0]}:{addr[1]} (proto v{reply_version})")
+            print(
+                f"[{ip}] ← bind reply from {addr[0]}:{addr[1]} (proto v{reply_version})"
+            )
             print(f"[{ip}]   inner: {inner}")
             if inner.get("t") == "bindok" and inner.get("key"):
                 print(f"[{ip}]   ✓ bind OK (device key received)")
