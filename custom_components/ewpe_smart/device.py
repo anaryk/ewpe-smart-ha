@@ -163,29 +163,6 @@ class EwpeDevice:
             self.host,
         )
 
-    async def _discover(self) -> None:
-        """Send a unicast scan to learn MAC, name, and protocol version."""
-        _LOGGER.info(
-            "Discovering device on %s:%s via unicast scan", self.host, self.port
-        )
-        reply, version = await unicast_scan(self.host, self.port, timeout=self.timeout)
-        if reply.get("t") != "dev":
-            raise EwpeProtocolError(f"Unexpected scan reply: {reply!r}")
-        mac = reply.get("cid") or reply.get("mac")
-        if not mac:
-            raise EwpeProtocolError("Scan reply contains no MAC")
-        self.mac = mac
-        self.name = reply.get("name") or mac
-        self.version = version
-        self.info = _info_from_scan(reply)
-        _LOGGER.info(
-            "Discovered %s (mac=%s, model=%s, proto=v%d)",
-            self.name,
-            self.mac,
-            self.info.get("model", "unknown"),
-            self.version,
-        )
-
     async def fetch_info(self, timeout: float | None = None) -> None:
         """Refresh model/firmware details from a unicast scan."""
         reply, _version = await unicast_scan(
