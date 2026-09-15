@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import (
@@ -17,17 +16,18 @@ from .const import (
     CONF_VERSION,
     DEFAULT_PORT,
     DEFAULT_UPDATE_INTERVAL,
-    DOMAIN,
     PLATFORMS,
     PROTO_V1,
 )
-from .coordinator import EwpeCoordinator
-from .device import EwpeDevice
+from .coordinator import EwpeConfigEntry, EwpeCoordinator
+from .device import EwpeDevice, EwpeError
 
 _LOGGER = logging.getLogger(__name__)
 
+INFO_TIMEOUT = 2.0
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+
+async def async_setup_entry(hass: HomeAssistant, entry: EwpeConfigEntry) -> bool:
     """Set up an EWPE Smart device from a config entry."""
     data = entry.data
     device = EwpeDevice(
@@ -43,21 +43,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = EwpeCoordinator(hass, entry, device, update_interval)
     await coordinator.async_config_entry_first_refresh()
 
-    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+    # Model and firmware only show up in the scan reply and aren't stored
+    # in the entry, so fetch them here. Not worth failing setup over.
+    try:
+        await device.fetch_info(timeout=INFO_TIMEOUT)
+    except EwpeError as err:
+        _LOGGER.debug("Could not read model info from %s: %s", device.host, err)
+
+    entry.runtime_data = coordinator
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: EwpeConfigEntry) -> bool:
     """Unload an EWPE Smart config entry."""
-    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unloaded:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
-    return unloaded
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+async def _async_options_updated(hass: HomeAssistant, entry: EwpeConfigEntry) -> None:
     """Reload the entry when the user changes options (e.g. polling interval)."""
     await hass.config_entries.async_reload(entry.entry_id)

@@ -15,6 +15,8 @@ from .device import EwpeAuthError, EwpeDevice, EwpeError
 
 _LOGGER = logging.getLogger(__name__)
 
+type EwpeConfigEntry = ConfigEntry[EwpeCoordinator]
+
 
 class EwpeCoordinator(DataUpdateCoordinator[dict[str, int]]):
     """Polls a single EwpeDevice and surfaces failures to HA."""

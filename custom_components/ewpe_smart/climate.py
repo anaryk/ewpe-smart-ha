@@ -13,12 +13,10 @@ from homeassistant.components.climate import (
     ClimateEntityFeature,
     HVACMode,
 )
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
     DOMAIN,
@@ -26,7 +24,6 @@ from .const import (
     FAN_SPEED_HIGH,
     FAN_SPEED_LOW,
     FAN_SPEED_MEDIUM,
-    MANUFACTURER,
     MAX_TEMP,
     MIN_TEMP,
     MODE_AUTO,
@@ -42,7 +39,9 @@ from .const import (
     POWER_OFF,
     POWER_ON,
 )
-from .coordinator import EwpeCoordinator
+from .coordinator import EwpeConfigEntry, EwpeCoordinator
+from .device import EwpeError
+from .entity import EwpeEntity
 
 HVAC_MODE_TO_DEVICE: dict[HVACMode, int] = {
     HVACMode.AUTO: MODE_AUTO,
@@ -66,18 +65,16 @@ DEVICE_TO_FAN_MODE: dict[int, str] = {v: k for k, v in FAN_MODE_TO_DEVICE.items(
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: EwpeConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Register the climate entity for this config entry."""
-    coordinator: EwpeCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities([EwpeClimateEntity(coordinator, entry)])
+    async_add_entities([EwpeClimateEntity(entry.runtime_data)])
 
 
-class EwpeClimateEntity(CoordinatorEntity[EwpeCoordinator], ClimateEntity):
+class EwpeClimateEntity(EwpeEntity, ClimateEntity):
     """Climate entity backed by an :class:`EwpeDevice`."""
 
-    _attr_has_entity_name = True
     _attr_name = None
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = 1
@@ -99,18 +96,8 @@ class EwpeClimateEntity(CoordinatorEntity[EwpeCoordinator], ClimateEntity):
         | ClimateEntityFeature.TURN_OFF
     )
 
-    def __init__(self, coordinator: EwpeCoordinator, entry: ConfigEntry) -> None:
-        super().__init__(coordinator)
-        self._entry = entry
-        device = coordinator.device
-        self._attr_unique_id = f"{device.mac}_climate"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, device.mac or entry.entry_id)},
-            name=device.name or entry.title,
-            manufacturer=MANUFACTURER,
-            model=device.info.get("model") if device.info else None,
-            sw_version=device.info.get("ver") if device.info else None,
-        )
+    def __init__(self, coordinator: EwpeCoordinator) -> None:
+        super().__init__(coordinator, "climate")
 
     @property
     def _data(self) -> dict[str, int]:
@@ -174,5 +161,12 @@ class EwpeClimateEntity(CoordinatorEntity[EwpeCoordinator], ClimateEntity):
         await self._send({PARAM_POWER: POWER_OFF})
 
     async def _send(self, params: dict[str, int]) -> None:
-        await self.coordinator.device.set_state(params)
+        try:
+            await self.coordinator.device.set_state(params)
+        except EwpeError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="command_failed",
+                translation_placeholders={"error": str(err)},
+            ) from err
         await self.coordinator.async_request_refresh()

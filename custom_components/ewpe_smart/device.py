@@ -19,6 +19,7 @@ from .const import (
 )
 from .protocol import (
     EwpeAuthError,
+    EwpeConnectionError,
     EwpeError,
     EwpeProtocolError,
     EwpeTimeout,
@@ -32,6 +33,12 @@ _LOGGER = logging.getLogger(__name__)
 
 def _generic_key_for(version: int) -> bytes:
     return GENERIC_KEY_V2 if version == PROTO_V2 else GENERIC_KEY
+
+
+def _info_from_scan(reply: dict[str, Any]) -> dict[str, Any]:
+    return {
+        k: reply[k] for k in ("brand", "model", "vender", "ver", "hid") if k in reply
+    }
 
 
 @dataclass
@@ -96,11 +103,7 @@ class EwpeDevice:
         self.mac = mac
         self.name = reply.get("name") or mac
         self.version = version
-        self.info = {
-            k: reply[k]
-            for k in ("brand", "model", "vender", "ver", "hid")
-            if k in reply
-        }
+        self.info = _info_from_scan(reply)
         _LOGGER.info(
             "Discovered %s (mac=%s, model=%s, proto=v%d)",
             self.name,
@@ -108,6 +111,15 @@ class EwpeDevice:
             self.info.get("model", "unknown"),
             self.version,
         )
+
+    async def fetch_info(self, timeout: float | None = None) -> None:
+        """Refresh model/firmware details from a unicast scan."""
+        reply, _version = await unicast_scan(
+            self.host, self.port, timeout=timeout or self.timeout
+        )
+        if reply.get("t") != "dev":
+            raise EwpeProtocolError(f"Unexpected scan reply: {reply!r}")
+        self.info = _info_from_scan(reply)
 
     async def get_status(self, cols: list[str] | None = None) -> dict[str, int]:
         """Read the current state of the device."""
@@ -162,6 +174,7 @@ class EwpeDevice:
 
 __all__ = [
     "EwpeAuthError",
+    "EwpeConnectionError",
     "EwpeDevice",
     "EwpeError",
     "EwpeProtocolError",

@@ -60,6 +60,10 @@ class EwpeTimeout(EwpeError):
     """Raised when the device does not reply within the timeout."""
 
 
+class EwpeConnectionError(EwpeError):
+    """Raised when the device cannot be reached (e.g. ICMP port unreachable)."""
+
+
 class EwpeProtocolError(EwpeError):
     """Raised when the reply has the wrong type or cannot be parsed."""
 
@@ -170,7 +174,7 @@ class _RequestProtocol(asyncio.DatagramProtocol):
 
     def __init__(self) -> None:
         self.future: asyncio.Future[tuple[bytes, tuple[str, int]]] = (
-            asyncio.get_event_loop().create_future()
+            asyncio.get_running_loop().create_future()
         )
 
     def datagram_received(self, data: bytes, addr: tuple[str, int]) -> None:
@@ -251,15 +255,20 @@ async def _send_raw(
 ) -> tuple[dict[str, Any], int]:
     """Open an ephemeral socket, send ``packet`` once, parse the first reply."""
     loop = asyncio.get_running_loop()
-    transport, protocol = await loop.create_datagram_endpoint(
-        _RequestProtocol, remote_addr=(host, port)
-    )
+    try:
+        transport, protocol = await loop.create_datagram_endpoint(
+            _RequestProtocol, remote_addr=(host, port)
+        )
+    except OSError as err:
+        raise EwpeConnectionError(f"Cannot reach {host}:{port}: {err}") from err
     try:
         transport.sendto(packet)
         try:
             data, _addr = await asyncio.wait_for(protocol.future, timeout=timeout)
         except TimeoutError as err:
             raise EwpeTimeout(f"No reply from {host}:{port} in {timeout}s") from err
+        except OSError as err:
+            raise EwpeConnectionError(f"Cannot reach {host}:{port}: {err}") from err
     finally:
         transport.close()
     return _parse_reply(data, reply_key, reply_version)
