@@ -142,3 +142,73 @@ async def test_manual_unreachable_shows_cannot_connect(hass: HomeAssistant) -> N
         )
     assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["errors"] == {"base": "cannot_connect"}
+
+
+@pytest.mark.asyncio
+async def test_reconfigure_updates_host(
+    hass: HomeAssistant, patch_bind_success: None
+) -> None:
+    """Reconfigure points the same device at a new IP address."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "manual"}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: "192.168.1.10"}
+    )
+    entry = result["result"]
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={
+            "source": config_entries.SOURCE_RECONFIGURE,
+            "entry_id": entry.entry_id,
+        },
+    )
+    assert result["step_id"] == "reconfigure"
+
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: "192.168.1.55"}
+    )
+    assert result["type"] == data_entry_flow.FlowResultType.ABORT
+    assert result["reason"] == "reconfigure_successful"
+    assert entry.data[CONF_HOST] == "192.168.1.55"
+
+
+@pytest.mark.asyncio
+async def test_reconfigure_rejects_other_device(
+    hass: HomeAssistant, patch_bind_success: None
+) -> None:
+    """Typing the IP of a different unit aborts instead of hijacking the entry."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "manual"}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: "192.168.1.10"}
+    )
+    entry = result["result"]
+
+    async def bind_other(self: EwpeDevice) -> None:
+        self.mac = "11:22:33:44:55:66"
+        self.name = "Other AC"
+        self.key = b"abcdefghijklmnop"
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={
+            "source": config_entries.SOURCE_RECONFIGURE,
+            "entry_id": entry.entry_id,
+        },
+    )
+    with patch.object(EwpeDevice, "bind", bind_other):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: "192.168.1.77"}
+        )
+    assert result["type"] == data_entry_flow.FlowResultType.ABORT
+    assert result["reason"] == "wrong_device"
+    assert entry.data[CONF_HOST] == "192.168.1.10"

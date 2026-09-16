@@ -31,6 +31,13 @@
       "reauth_confirm": {
         "title": "Znovu ověřit",
         "description": "Klíč zařízení byl odmítnut. Pokud jste jednotku nedávno resetoval, vypněte a zapněte ji, pak klikněte na Odeslat pro nové spárování."
+      },
+      "reconfigure": {
+        "title": "Změnit IP adresu",
+        "description": "Zadejte aktuální IP adresu zařízení. Klíč se při uložení načte znovu.",
+        "data": {
+          "host": "IP adresa"
+        }
       }
     },
     "error": {
@@ -42,7 +49,9 @@
     },
     "abort": {
       "already_configured": "Toto zařízení je již nakonfigurováno",
-      "reauth_successful": "Opětovné ověření proběhlo úspěšně"
+      "reauth_successful": "Opětovné ověření proběhlo úspěšně",
+      "reconfigure_successful": "IP adresa byla aktualizována",
+      "wrong_device": "Tato IP patří jinému zařízení"
     }
   },
   "options": {

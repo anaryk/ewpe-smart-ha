@@ -143,6 +143,15 @@ This usually means the bind handshake succeeded but the device sent a status
 reply that doesn't fit the expected schema. Open an issue with the HA log
 output (set the integration log level to debug — see below).
 
+### The device changed IP address
+
+When a poll times out, the integration broadcasts a scan and follows the unit to
+its new address if the MAC matches, then writes that address back to the config
+entry. If broadcast does not reach the device (routed VLAN, Docker bridge
+networking), use **Settings → Devices & Services → EWPE Smart → Reconfigure** and
+type the new IP manually. A DHCP reservation for the AC avoids the problem
+altogether.
+
 ### Re-authentication required
 
 If you've reset the AC controller (factory reset, firmware update, etc.) the
