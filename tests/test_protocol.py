@@ -7,11 +7,38 @@ import pytest
 from custom_components.ewpe_smart.const import GENERIC_KEY_V2
 from custom_components.ewpe_smart.protocol import (
     EwpeAuthError,
+    EwpeProtocolError,
     decrypt,
     decrypt_v2,
     encrypt,
     encrypt_v2,
+    parse_cmd_reply,
 )
+
+
+def test_parse_cmd_reply_accepts_val_or_p() -> None:
+    with_val = {
+        "t": "res",
+        "mac": "580d0df2deaf",
+        "opt": ["Lig"],
+        "val": [0],
+        "r": 200,
+    }
+    assert parse_cmd_reply(with_val) == {"Lig": 0}
+
+    with_p = {
+        "t": "res",
+        "mac": "580d0df2deaf",
+        "opt": ["Lig", "Buzzer_ON_OFF"],
+        "p": [0, 1],
+        "r": 200,
+    }
+    assert parse_cmd_reply(with_p) == {"Lig": 0, "Buzzer_ON_OFF": 1}
+
+
+def test_parse_cmd_reply_rejects_missing_values() -> None:
+    with pytest.raises(EwpeProtocolError):
+        parse_cmd_reply({"t": "res", "mac": "aa", "opt": ["Pow"]})
 
 
 def test_encrypt_decrypt_roundtrip_default_key() -> None:
@@ -43,6 +70,14 @@ def test_encrypt_produces_ascii_base64() -> None:
     cipher = encrypt(payload)
     cipher.encode("ascii")  # would raise UnicodeEncodeError on non-ASCII
     assert len(cipher) % 4 == 0
+
+
+def test_v1_bind_ciphertext_matches_greeclimate() -> None:
+    """Wire bytes must match greeclimate so Gree firmware accepts bind."""
+    payload = {"t": "bind", "mac": "580d0df2deaf", "uid": 0}
+    assert encrypt(payload) == (
+        "UH1xnvFY7toQqZpWdQqnj8Y01Y3RTO6WGC8Szx4uAGxYKP+bEKm/j2Ku1yi1i584"
+    )
 
 
 # ── V2 (AES-GCM) ──────────────────────────────────────────────────────────
