@@ -15,7 +15,11 @@ from custom_components.ewpe_smart.const import (
     CONF_NAME,
     DOMAIN,
 )
-from custom_components.ewpe_smart.device import EwpeConnectionError, EwpeDevice
+from custom_components.ewpe_smart.device import (
+    EwpeConnectionError,
+    EwpeDevice,
+    EwpeRefusedError,
+)
 
 pytestmark = pytest.mark.usefixtures("mock_setup_entry")
 
@@ -212,3 +216,22 @@ async def test_reconfigure_rejects_other_device(
     assert result["type"] == data_entry_flow.FlowResultType.ABORT
     assert result["reason"] == "wrong_device"
     assert entry.data[CONF_HOST] == "192.168.1.10"
+
+
+@pytest.mark.asyncio
+async def test_manual_refused_shows_device_refused(hass: HomeAssistant) -> None:
+    """A device answering ICMP port unreachable gets its own error message."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "manual"}
+    )
+    with patch.object(
+        EwpeDevice, "bind", AsyncMock(side_effect=EwpeRefusedError("refused"))
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: "10.0.0.99"}
+        )
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
+    assert result["errors"] == {"base": "device_refused"}

@@ -21,9 +21,9 @@ from custom_components.ewpe_smart.const import (
 )
 from custom_components.ewpe_smart.device import EwpeDevice
 from custom_components.ewpe_smart.protocol import (
-    EwpeConnectionError,
     EwpeError,
     EwpeProtocolError,
+    EwpeRefusedError,
     EwpeTimeout,
     unicast_scan,
 )
@@ -246,8 +246,8 @@ def _closed_udp_port() -> int:
 
 
 @pytest.mark.asyncio
-async def test_unreachable_port_raises_ewpe_error() -> None:
-    """ICMP errors must surface as EwpeError, not a bare OSError."""
+async def test_unreachable_port_raises_refused_error() -> None:
+    """ICMP port unreachable must surface as EwpeRefusedError, not a bare OSError."""
     device = EwpeDevice(
         host="127.0.0.1",
         port=_closed_udp_port(),
@@ -256,5 +256,14 @@ async def test_unreachable_port_raises_ewpe_error() -> None:
         timeout=2.0,
     )
 
-    with pytest.raises(EwpeConnectionError):
+    with pytest.raises(EwpeRefusedError):
         await device.get_status()
+
+
+@pytest.mark.asyncio
+async def test_bind_against_closed_port_raises_refused_error() -> None:
+    """Setup goes through scan_then_bind(), which must report the refusal too."""
+    device = EwpeDevice(host="127.0.0.1", port=_closed_udp_port(), timeout=2.0)
+
+    with pytest.raises(EwpeRefusedError):
+        await device.bind()

@@ -62,7 +62,16 @@ class EwpeTimeout(EwpeError):
 
 
 class EwpeConnectionError(EwpeError):
-    """Raised when the device cannot be reached (e.g. ICMP port unreachable)."""
+    """Raised when the device cannot be reached."""
+
+
+class EwpeRefusedError(EwpeConnectionError):
+    """Raised when the device answers with an ICMP port unreachable.
+
+    The host is up and routable, but nothing is bound to the UDP port. On
+    recent Gree/Tosot/Sinclair wifi modules this is most likely local (LAN)
+    control being disabled, in which case no protocol version or key helps.
+    """
 
 
 class EwpeProtocolError(EwpeError):
@@ -71,6 +80,17 @@ class EwpeProtocolError(EwpeError):
 
 class EwpeAuthError(EwpeError):
     """Raised when a reply cannot be decrypted with the supplied key."""
+
+
+def _connection_error(host: str, port: int, err: BaseException) -> EwpeConnectionError:
+    """Map a socket-level failure to the matching EWPE exception."""
+    if isinstance(err, ConnectionRefusedError):
+        return EwpeRefusedError(
+            f"{host}:{port} replied ICMP port unreachable: the device is "
+            f"reachable but nothing is listening on UDP {port}, most likely "
+            "because local control is disabled on this firmware"
+        )
+    return EwpeConnectionError(f"Cannot reach {host}:{port}: {err}")
 
 
 def parse_cmd_reply(reply: dict[str, Any]) -> dict[str, int]:
@@ -327,7 +347,7 @@ async def _send_raw(
             _RequestProtocol, remote_addr=(host, port)
         )
     except OSError as err:
-        raise EwpeConnectionError(f"Cannot reach {host}:{port}: {err}") from err
+        raise _connection_error(host, port, err) from err
     try:
         transport.sendto(packet)
         try:
@@ -335,7 +355,7 @@ async def _send_raw(
         except TimeoutError as err:
             raise EwpeTimeout(f"No reply from {host}:{port} in {timeout}s") from err
         except OSError as err:
-            raise EwpeConnectionError(f"Cannot reach {host}:{port}: {err}") from err
+            raise _connection_error(host, port, err) from err
     finally:
         transport.close()
     return _parse_reply(data, reply_key, reply_version)
@@ -357,17 +377,18 @@ async def scan_then_bind(
     """
     scan_packet = json.dumps({"t": "scan"}).encode("utf-8")
     loop = asyncio.get_running_loop()
-    transport, protocol = await loop.create_datagram_endpoint(
-        _SessionProtocol, remote_addr=(host, port)
-    )
+    try:
+        transport, protocol = await loop.create_datagram_endpoint(
+            _SessionProtocol, remote_addr=(host, port)
+        )
+    except OSError as err:
+        raise _connection_error(host, port, err) from err
 
     async def _await_reply(before: int, wait: float) -> bytes:
         deadline = loop.time() + wait
         while len(protocol.replies) <= before:
             if protocol.error is not None:
-                raise EwpeConnectionError(
-                    f"Cannot reach {host}:{port}: {protocol.error}"
-                )
+                raise _connection_error(host, port, protocol.error)
             # No await between the length check and clear(), so a datagram
             # cannot slip in and leave the event cleared behind our back.
             protocol.received.clear()
@@ -477,14 +498,17 @@ async def scan(
     the config flow knows how to bind to the chosen device.
     """
     loop = asyncio.get_running_loop()
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    sock.setblocking(False)
-    sock.bind(("", 0))
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        sock.setblocking(False)
+        sock.bind(("", 0))
 
-    transport, protocol = await loop.create_datagram_endpoint(
-        _BroadcastProtocol, sock=sock
-    )
+        transport, protocol = await loop.create_datagram_endpoint(
+            _BroadcastProtocol, sock=sock
+        )
+    except OSError as err:
+        raise _connection_error(broadcast_addr, port, err) from err
     try:
         scan_packet = json.dumps({"t": "scan"}).encode("utf-8")
         transport.sendto(scan_packet, (broadcast_addr, port))
