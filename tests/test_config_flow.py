@@ -235,3 +235,37 @@ async def test_manual_refused_shows_device_refused(hass: HomeAssistant) -> None:
         )
     assert result["type"] == data_entry_flow.FlowResultType.FORM
     assert result["errors"] == {"base": "device_refused"}
+
+
+@pytest.mark.asyncio
+async def test_reconfigure_refused_shows_device_refused(
+    hass: HomeAssistant, patch_bind_success: None
+) -> None:
+    """Reconfigure reports an ICMP refusal the same way as the manual step."""
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {"next_step_id": "manual"}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: "192.168.1.10"}
+    )
+    entry = result["result"]
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN,
+        context={
+            "source": config_entries.SOURCE_RECONFIGURE,
+            "entry_id": entry.entry_id,
+        },
+    )
+    with patch.object(
+        EwpeDevice, "bind", AsyncMock(side_effect=EwpeRefusedError("refused"))
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"], {CONF_HOST: "192.168.1.77"}
+        )
+    assert result["type"] == data_entry_flow.FlowResultType.FORM
+    assert result["errors"] == {"base": "device_refused"}
+    assert entry.data[CONF_HOST] == "192.168.1.10"
