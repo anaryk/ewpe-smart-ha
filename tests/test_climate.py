@@ -90,6 +90,15 @@ async def test_set_temperature_emits_set_tem() -> None:
 
 
 @pytest.mark.asyncio
+async def test_set_temperature_with_hvac_mode_sends_one_packet() -> None:
+    entity, device = _make_entity({"Pow": 0, "Mod": 1, "SetTem": 24})
+    await entity.async_set_temperature(temperature=22, hvac_mode=HVACMode.HEAT)
+    device.set_state.assert_awaited_once_with(
+        {PARAM_POWER: 1, PARAM_MODE: 4, PARAM_SET_TEMP: 22}
+    )
+
+
+@pytest.mark.asyncio
 async def test_set_hvac_mode_off_emits_pow_zero() -> None:
     entity, device = _make_entity({"Pow": 1, "Mod": 1})
     await entity.async_set_hvac_mode(HVACMode.OFF)
