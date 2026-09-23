@@ -26,6 +26,8 @@ from .const import (
 )
 from .coordinator import EwpeConfigEntry, EwpeCoordinator
 from .entity import EwpeEntity
+from .params_catalog import SWITCH_DESCRIPTIONS as CATALOG_SWITCH_DESCRIPTIONS
+from .params_catalog import param_disabled_by_default
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -78,11 +80,25 @@ SWITCH_DESCRIPTIONS: tuple[EwpeSwitchDescription, ...] = (
 )
 
 
+# Wire keys without a hand-written description above get a switch from the
+# parameter catalog.
+CATALOG_SWITCHES: tuple[EwpeSwitchDescription, ...] = tuple(
+    EwpeSwitchDescription(
+        param=d.param,
+        unique_id_suffix=d.unique_id_suffix,
+        translation_key=d.translation_key,
+    )
+    for d in CATALOG_SWITCH_DESCRIPTIONS
+)
+
+
 def supported_switch_descriptions(
     data: Mapping[str, int],
 ) -> tuple[EwpeSwitchDescription, ...]:
     """Return switch descriptions whose param appeared in a status reply."""
-    return tuple(desc for desc in SWITCH_DESCRIPTIONS if desc.param in data)
+    return tuple(
+        desc for desc in SWITCH_DESCRIPTIONS + CATALOG_SWITCHES if desc.param in data
+    )
 
 
 async def async_setup_entry(
@@ -109,6 +125,8 @@ class EwpeSwitchEntity(EwpeEntity, SwitchEntity):
         super().__init__(coordinator, description.unique_id_suffix)
         self._description = description
         self._attr_translation_key = description.translation_key
+        if param_disabled_by_default(description.param):
+            self._attr_entity_registry_enabled_default = False
 
     @property
     def is_on(self) -> bool | None:

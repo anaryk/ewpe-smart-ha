@@ -12,7 +12,9 @@ from custom_components.ewpe_smart.const import (
     PARAM_SLEEP,
     PARAM_SLEEP_MODE,
 )
+from custom_components.ewpe_smart.params_catalog import CORE_SWITCH_PARAMS
 from custom_components.ewpe_smart.switch import (
+    SWITCH_DESCRIPTIONS,
     EwpeSwitchEntity,
     supported_switch_descriptions,
 )
@@ -90,3 +92,27 @@ async def test_sleep_also_writes_sleep_mode() -> None:
     entity, device = _make_switch({"SwhSlp": 0}, param=PARAM_SLEEP)
     await entity.async_turn_on()
     device.set_state.assert_awaited_once_with({PARAM_SLEEP: 1, PARAM_SLEEP_MODE: 1})
+
+
+def test_catalog_adds_switches_for_keys_without_a_description() -> None:
+    data = {"SmartSlpMod": 1, "SlpMod": 0, "SwhSlp": 1, "Buzzer_ON_OFF": 1}
+    descriptions = supported_switch_descriptions(data)
+    suffixes = {d.param: d.unique_id_suffix for d in descriptions}
+    assert suffixes == {
+        "SwhSlp": "sleep",
+        "SmartSlpMod": "smart_slp_mod",
+        "SlpMod": "slp_mod",
+        "Buzzer_ON_OFF": "buzzer_on_off",
+    }
+
+
+def test_catalog_does_not_duplicate_described_keys() -> None:
+    data = dict.fromkeys(CORE_SWITCH_PARAMS, 0)
+    descriptions = supported_switch_descriptions(data)
+    assert len(descriptions) == len({d.param for d in descriptions})
+    assert {d.param for d in SWITCH_DESCRIPTIONS} == CORE_SWITCH_PARAMS
+
+
+def test_catalog_switch_can_be_disabled_by_default() -> None:
+    entity, _ = _make_switch({"AutoClean": 0}, param="AutoClean")
+    assert entity.entity_registry_enabled_default is False

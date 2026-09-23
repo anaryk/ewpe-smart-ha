@@ -85,6 +85,18 @@
     "sensor": {
       "indoor_temperature": {
         "name": "Teplota v místnosti"
+      },
+      "outdoor_temperature": {
+        "name": "Venkovní teplota"
+      },
+      "drain_water_sensor": {
+        "name": "Senzor odvodnění"
+      },
+      "humidity": {
+        "name": "Vlhkost / mokrý režim"
+      },
+      "fault": {
+        "name": "Kód poruchy"
       }
     },
     "switch": {
@@ -111,6 +123,62 @@
       },
       "fresh_air": {
         "name": "Přívod čerstvého vzduchu"
+      },
+      "smart_slp_mod": {
+        "name": "Chytrý spánek (SmartSlpMod)"
+      },
+      "slp_mod": {
+        "name": "Typ spánku"
+      },
+      "emod": {
+        "name": "Ekonomický režim (Emod)"
+      },
+      "nobody_save": {
+        "name": "Úspora při neobsazení"
+      },
+      "light_sensor": {
+        "name": "Senzor osvětlení"
+      },
+      "buzzer_ctrl": {
+        "name": "Pípání (BuzzerCtrl)"
+      },
+      "buzzer_on_off": {
+        "name": "Pípání (Buzzer_ON_OFF)"
+      },
+      "anti_direct_blow": {
+        "name": "Bez přímého foukání"
+      },
+      "smart_heat_8c": {
+        "name": "Topení 8 °C"
+      }
+    },
+    "select": {
+      "swing_horizontal": {
+        "name": "Vodorovné kmitání",
+        "state": {
+          "full_swing": "Plné kmitání",
+          "left": "Vlevo",
+          "left_center": "Vlevo střed",
+          "center": "Střed",
+          "right_center": "Vpravo střed",
+          "right": "Vpravo"
+        }
+      },
+      "swing_vertical": {
+        "name": "Svislé kmitání",
+        "state": {
+          "full_swing": "Plné kmitání",
+          "fixed_upper": "Fixní nahoře",
+          "fixed_upper_middle": "Fixní horní střed",
+          "fixed_middle": "Fixní střed",
+          "fixed_lower_middle": "Fixní dolní střed",
+          "fixed_lower": "Fixní dole",
+          "swing_upper": "Kmitání nahoře",
+          "swing_upper_middle": "Kmitání horní střed",
+          "swing_middle": "Kmitání střed",
+          "swing_lower_middle": "Kmitání dolní střed",
+          "swing_lower": "Kmitání dole"
+        }
       }
     }
   },
