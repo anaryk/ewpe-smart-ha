@@ -1,0 +1,10 @@
+# Copy to probe_device.local.sh and fill in (that file is gitignored).
+#   cp tools/probe_device.local.sh.example tools/probe_device.local.sh
+#
+# Then run experiment scripts without arguments:
+#   ./tools/probe_wind_speed_experiment.sh
+
+IP=192.168.50.196
+KEY='paste-device-key-from-ha-or-bind'
+MAC='580d0df2deaf'
+VERSION=2
