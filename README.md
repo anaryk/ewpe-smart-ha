@@ -119,6 +119,25 @@ The same indoor temperature value as `climate.current_temperature`, exposed as
 a separate sensor entity. Useful for long-term graphs in HA's energy/history
 dashboards or for use in automations independently of the climate entity.
 
+## Actions
+
+### `ewpe_smart.set_state`
+
+The unit beeps on every command it receives. Mode, target temperature, fan mode, quiet and turbo sit on different entities, so an automation that changes several of them beeps once per entity. `ewpe_smart.set_state` takes any combination of the five and sends them in one command:
+
+```yaml
+action: ewpe_smart.set_state
+target:
+  entity_id: climate.living_room_ac
+data:
+  hvac_mode: heat
+  temperature: 22
+  fan_mode: auto
+  quiet: true
+```
+
+Every field is optional, but at least one is required. Values are checked before anything is sent: an unsupported mode or fan mode, a temperature outside 16-30 °C, or `quiet`/`turbo` on a unit that does not report them raises an error and the unit does not beep.
+
 ## Options
 
 After setup, click **Configure** on the device card to change:

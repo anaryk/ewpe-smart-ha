@@ -551,6 +551,68 @@
   "exceptions": {
     "command_failed": {
       "message": "Failed to send the command to the device: {error}"
+    },
+    "unsupported_hvac_mode": {
+      "message": "HVAC mode {hvac_mode} is not supported."
+    },
+    "temperature_out_of_range": {
+      "message": "Temperature {temperature} is outside {min_temp}-{max_temp} °C."
+    },
+    "unsupported_fan_mode": {
+      "message": "Fan mode {fan_mode} is not supported."
+    },
+    "not_supported_by_device": {
+      "message": "This unit does not report {setting}, so it cannot be set."
+    }
+  },
+  "services": {
+    "set_state": {
+      "name": "Set state",
+      "description": "Sets mode, target temperature, fan mode, quiet and turbo in one command, so the unit beeps once.",
+      "fields": {
+        "hvac_mode": {
+          "name": "HVAC mode",
+          "description": "Operating mode. Off turns the unit off."
+        },
+        "temperature": {
+          "name": "Temperature",
+          "description": "Target temperature."
+        },
+        "fan_mode": {
+          "name": "Fan mode",
+          "description": "Fan step."
+        },
+        "quiet": {
+          "name": "Quiet",
+          "description": "Turn quiet mode on or off."
+        },
+        "turbo": {
+          "name": "Turbo",
+          "description": "Turn turbo mode on or off."
+        }
+      }
+    }
+  },
+  "selector": {
+    "hvac_mode": {
+      "options": {
+        "off": "Off",
+        "auto": "Auto",
+        "cool": "Cool",
+        "heat": "Heat",
+        "dry": "Dry",
+        "fan_only": "Fan only"
+      }
+    },
+    "fan_mode": {
+      "options": {
+        "auto": "Auto",
+        "low": "Low",
+        "medium_low": "Medium low",
+        "medium": "Medium",
+        "medium_high": "Medium high",
+        "high": "High"
+      }
     }
   }
 }

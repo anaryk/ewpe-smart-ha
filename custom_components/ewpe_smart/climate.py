@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import voluptuous as vol
 from homeassistant.components.climate import (
     ATTR_HVAC_MODE,
     FAN_AUTO,
@@ -16,7 +17,9 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -37,10 +40,13 @@ from .const import (
     PARAM_FAN_SPEED,
     PARAM_MODE,
     PARAM_POWER,
+    PARAM_QUIET,
     PARAM_SET_TEMP,
     PARAM_TEMP_SENSOR,
+    PARAM_TUR,
     POWER_OFF,
     POWER_ON,
+    QUIET_MODE_ON,
 )
 from .coordinator import EwpeConfigEntry, EwpeCoordinator
 from .device import EwpeError
@@ -73,6 +79,29 @@ FAN_MODE_TO_DEVICE: dict[str, int] = {
 DEVICE_TO_FAN_MODE: dict[int, str] = {v: k for k, v in FAN_MODE_TO_DEVICE.items()}
 
 
+SERVICE_SET_STATE = "set_state"
+ATTR_FAN_MODE = "fan_mode"
+ATTR_QUIET = "quiet"
+ATTR_TURBO = "turbo"
+
+# The unit beeps once per command, so this service writes any combination of
+# mode, target, fan, quiet and turbo in a single packet.
+SET_STATE_SCHEMA = vol.All(
+    cv.has_at_least_one_key(
+        ATTR_HVAC_MODE, ATTR_TEMPERATURE, ATTR_FAN_MODE, ATTR_QUIET, ATTR_TURBO
+    ),
+    cv.make_entity_service_schema(
+        {
+            vol.Optional(ATTR_HVAC_MODE): vol.Coerce(HVACMode),
+            vol.Optional(ATTR_TEMPERATURE): vol.Coerce(float),
+            vol.Optional(ATTR_FAN_MODE): cv.string,
+            vol.Optional(ATTR_QUIET): cv.boolean,
+            vol.Optional(ATTR_TURBO): cv.boolean,
+        }
+    ),
+)
+
+
 def _hvac_mode_params(hvac_mode: HVACMode) -> dict[str, int]:
     if hvac_mode == HVACMode.OFF:
         return {PARAM_POWER: POWER_OFF}
@@ -89,6 +118,10 @@ async def async_setup_entry(
 ) -> None:
     """Register the climate entity for this config entry."""
     async_add_entities([EwpeClimateEntity(entry.runtime_data)])
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_SET_STATE, SET_STATE_SCHEMA, "async_set_state"
+    )
 
 
 class EwpeClimateEntity(EwpeEntity, ClimateEntity):
@@ -173,6 +206,44 @@ class EwpeClimateEntity(EwpeEntity, ClimateEntity):
             params[PARAM_SET_TEMP] = int(round(float(temperature)))
         if params:
             await self._send(params)
+
+    async def async_set_state(self, **kwargs: Any) -> None:
+        """Write every given setting in one packet."""
+        params: dict[str, int] = {}
+        if (hvac_mode := kwargs.get(ATTR_HVAC_MODE)) is not None:
+            if hvac_mode not in self.hvac_modes:
+                raise self._invalid("unsupported_hvac_mode", hvac_mode=hvac_mode)
+            params.update(_hvac_mode_params(hvac_mode))
+        if (temperature := kwargs.get(ATTR_TEMPERATURE)) is not None:
+            if not self.min_temp <= temperature <= self.max_temp:
+                raise self._invalid(
+                    "temperature_out_of_range",
+                    temperature=str(temperature),
+                    min_temp=str(self.min_temp),
+                    max_temp=str(self.max_temp),
+                )
+            params[PARAM_SET_TEMP] = int(round(temperature))
+        if (fan_mode := kwargs.get(ATTR_FAN_MODE)) is not None:
+            if fan_mode not in FAN_MODE_TO_DEVICE:
+                raise self._invalid("unsupported_fan_mode", fan_mode=fan_mode)
+            params[PARAM_FAN_SPEED] = FAN_MODE_TO_DEVICE[fan_mode]
+        for attr, param, on_value in (
+            (ATTR_QUIET, PARAM_QUIET, QUIET_MODE_ON),
+            (ATTR_TURBO, PARAM_TUR, POWER_ON),
+        ):
+            if (enabled := kwargs.get(attr)) is None:
+                continue
+            if param not in self._data:
+                raise self._invalid("not_supported_by_device", setting=attr)
+            params[param] = on_value if enabled else POWER_OFF
+        await self._send(params)
+
+    def _invalid(self, key: str, **placeholders: str) -> ServiceValidationError:
+        return ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key=key,
+            translation_placeholders=placeholders,
+        )
 
     async def async_turn_on(self) -> None:
         await self._send({PARAM_POWER: POWER_ON})
