@@ -58,9 +58,24 @@ def test_is_on_reflects_param_value() -> None:
 
 @pytest.mark.asyncio
 async def test_turn_on_sends_param_one() -> None:
+    entity, device = _make_switch({"Lig": 0}, param=PARAM_LIG)
+    await entity.async_turn_on()
+    device.set_state.assert_awaited_once_with({PARAM_LIG: 1})
+
+
+@pytest.mark.asyncio
+async def test_quiet_turns_on_with_two_like_the_app() -> None:
     entity, device = _make_switch({"Quiet": 0})
     await entity.async_turn_on()
-    device.set_state.assert_awaited_once_with({PARAM_QUIET: 1})
+    device.set_state.assert_awaited_once_with({PARAM_QUIET: 2})
+    await entity.async_turn_off()
+    device.set_state.assert_awaited_with({PARAM_QUIET: 0})
+
+
+@pytest.mark.parametrize("value", [1, 2, 3])
+def test_quiet_reads_any_non_zero_value_as_on(value: int) -> None:
+    entity, _ = _make_switch({"Quiet": value})
+    assert entity.is_on is True
 
 
 @pytest.mark.asyncio

@@ -92,6 +92,10 @@ STATUS_PARAMS: list[str] = [
 POWER_OFF = 0
 POWER_ON = 1
 
+# The EWPE Smart and Gree apps switch quiet on with 2; some firmware drops a
+# plain 1 after a while (greeclimate issue 87). Any non-zero value reads as on.
+QUIET_MODE_ON = 2
+
 MODE_AUTO = 0
 MODE_COOL = 1
 MODE_DRY = 2
