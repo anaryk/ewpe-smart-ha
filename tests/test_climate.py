@@ -64,7 +64,14 @@ def test_modes_map_correctly(device_mode: int, expected: HVACMode) -> None:
 
 @pytest.mark.parametrize(
     ("speed", "expected"),
-    [(0, FAN_AUTO), (1, FAN_LOW), (3, FAN_MEDIUM), (5, FAN_HIGH)],
+    [
+        (0, FAN_AUTO),
+        (1, FAN_LOW),
+        (2, "medium_low"),
+        (3, FAN_MEDIUM),
+        (4, "medium_high"),
+        (5, FAN_HIGH),
+    ],
 )
 def test_fan_modes_map_correctly(speed: int, expected: str) -> None:
     entity, _ = _make_entity({"Pow": 1, "Mod": 1, "WdSpd": speed})
@@ -108,6 +115,13 @@ async def test_set_fan_mode_high_emits_wdspd_5() -> None:
     entity, device = _make_entity({"Pow": 1, "Mod": 1})
     await entity.async_set_fan_mode(FAN_HIGH)
     device.set_state.assert_awaited_once_with({PARAM_FAN_SPEED: 5})
+
+
+@pytest.mark.asyncio
+async def test_set_fan_mode_medium_low_emits_wdspd_2() -> None:
+    entity, device = _make_entity({"Pow": 1, "Mod": 1, "WdSpd": 0})
+    await entity.async_set_fan_mode("medium_low")
+    device.set_state.assert_awaited_once_with({PARAM_FAN_SPEED: 2})
 
 
 @pytest.mark.asyncio

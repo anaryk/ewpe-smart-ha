@@ -65,6 +65,22 @@
     }
   },
   "entity": {
+    "climate": {
+      "ewpe": {
+        "state_attributes": {
+          "fan_mode": {
+            "state": {
+              "auto": "Automaticky",
+              "low": "Nízká",
+              "medium_low": "Středně nízká",
+              "medium": "Střední",
+              "medium_high": "Středně vysoká",
+              "high": "Vysoká"
+            }
+          }
+        }
+      }
+    },
     "sensor": {
       "indoor_temperature": {
         "name": "Teplota v místnosti"

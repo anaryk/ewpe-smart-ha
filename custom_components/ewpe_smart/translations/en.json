@@ -65,6 +65,22 @@
     }
   },
   "entity": {
+    "climate": {
+      "ewpe": {
+        "state_attributes": {
+          "fan_mode": {
+            "state": {
+              "auto": "Auto",
+              "low": "Low",
+              "medium_low": "Medium low",
+              "medium": "Medium",
+              "medium_high": "Medium high",
+              "high": "High"
+            }
+          }
+        }
+      }
+    },
     "sensor": {
       "indoor_temperature": {
         "name": "Indoor temperature"
