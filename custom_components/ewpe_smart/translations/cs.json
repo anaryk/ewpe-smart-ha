@@ -185,6 +185,68 @@
   "exceptions": {
     "command_failed": {
       "message": "Příkaz se nepodařilo odeslat do zařízení: {error}"
+    },
+    "unsupported_hvac_mode": {
+      "message": "Režim HVAC {hvac_mode} není podporován."
+    },
+    "temperature_out_of_range": {
+      "message": "Teplota {temperature} je mimo rozsah {min_temp}-{max_temp} °C."
+    },
+    "unsupported_fan_mode": {
+      "message": "Režim ventilátoru {fan_mode} není podporován."
+    },
+    "not_supported_by_device": {
+      "message": "Tato jednotka nehlásí {setting}, proto to nelze nastavit."
+    }
+  },
+  "services": {
+    "set_state": {
+      "name": "Nastavit stav",
+      "description": "Nastaví režim, cílovou teplotu, rychlost ventilátoru, tichý režim a turbo jedním příkazem, takže jednotka pípne jen jednou.",
+      "fields": {
+        "hvac_mode": {
+          "name": "Režim HVAC",
+          "description": "Provozní režim. Vypnuto jednotku vypne."
+        },
+        "temperature": {
+          "name": "Teplota",
+          "description": "Cílová teplota."
+        },
+        "fan_mode": {
+          "name": "Režim ventilátoru",
+          "description": "Stupeň ventilátoru."
+        },
+        "quiet": {
+          "name": "Tichý režim",
+          "description": "Zapne nebo vypne tichý režim."
+        },
+        "turbo": {
+          "name": "Turbo",
+          "description": "Zapne nebo vypne režim turbo."
+        }
+      }
+    }
+  },
+  "selector": {
+    "hvac_mode": {
+      "options": {
+        "off": "Vypnuto",
+        "auto": "Automaticky",
+        "cool": "Chlazení",
+        "heat": "Topení",
+        "dry": "Odvlhčování",
+        "fan_only": "Pouze ventilátor"
+      }
+    },
+    "fan_mode": {
+      "options": {
+        "auto": "Automaticky",
+        "low": "Nízká",
+        "medium_low": "Středně nízká",
+        "medium": "Střední",
+        "medium_high": "Středně vysoká",
+        "high": "Vysoká"
+      }
     }
   }
 }

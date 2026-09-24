@@ -1,0 +1,41 @@
+set_state:
+  target:
+    entity:
+      integration: ewpe_smart
+      domain: climate
+  fields:
+    hvac_mode:
+      selector:
+        select:
+          options:
+            - "off"
+            - auto
+            - cool
+            - heat
+            - dry
+            - fan_only
+          translation_key: hvac_mode
+    temperature:
+      selector:
+        number:
+          min: 16
+          max: 30
+          step: 1
+          unit_of_measurement: "°C"
+    fan_mode:
+      selector:
+        select:
+          options:
+            - auto
+            - low
+            - medium_low
+            - medium
+            - medium_high
+            - high
+          translation_key: fan_mode
+    quiet:
+      selector:
+        boolean:
+    turbo:
+      selector:
+        boolean:
