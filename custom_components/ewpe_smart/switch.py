@@ -22,6 +22,7 @@ from .const import (
     PARAM_TUR,
     POWER_OFF,
     POWER_ON,
+    QUIET_MODE_ON,
 )
 from .coordinator import EwpeConfigEntry, EwpeCoordinator
 from .entity import EwpeEntity
@@ -36,6 +37,7 @@ class EwpeSwitchDescription:
     translation_key: str
     # Params written alongside ``param``, but never read back.
     also_writes: tuple[str, ...] = ()
+    on_value: int = POWER_ON
 
 
 SWITCH_DESCRIPTIONS: tuple[EwpeSwitchDescription, ...] = (
@@ -49,7 +51,10 @@ SWITCH_DESCRIPTIONS: tuple[EwpeSwitchDescription, ...] = (
         param=PARAM_TUR, unique_id_suffix="turbo", translation_key="turbo"
     ),
     EwpeSwitchDescription(
-        param=PARAM_QUIET, unique_id_suffix="quiet", translation_key="quiet"
+        param=PARAM_QUIET,
+        unique_id_suffix="quiet",
+        translation_key="quiet",
+        on_value=QUIET_MODE_ON,
     ),
     EwpeSwitchDescription(
         param=PARAM_BLO, unique_id_suffix="xfan", translation_key="xfan"
@@ -113,7 +118,7 @@ class EwpeSwitchEntity(EwpeEntity, SwitchEntity):
         return bool(value)
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        await self._send(POWER_ON)
+        await self._send(self._description.on_value)
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         await self._send(POWER_OFF)
