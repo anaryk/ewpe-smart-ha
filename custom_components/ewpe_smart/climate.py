@@ -24,6 +24,8 @@ from .const import (
     FAN_SPEED_HIGH,
     FAN_SPEED_LOW,
     FAN_SPEED_MEDIUM,
+    FAN_SPEED_MEDIUM_HIGH,
+    FAN_SPEED_MEDIUM_LOW,
     MAX_TEMP,
     MIN_TEMP,
     MODE_AUTO,
@@ -54,10 +56,17 @@ DEVICE_TO_HVAC_MODE: dict[int, HVACMode] = {
     v: k for k, v in HVAC_MODE_TO_DEVICE.items()
 }
 
+# The unit has five fixed steps; HA only names four of them, so steps 2 and 4
+# use custom modes translated in strings.json.
+FAN_MEDIUM_LOW = "medium_low"
+FAN_MEDIUM_HIGH = "medium_high"
+
 FAN_MODE_TO_DEVICE: dict[str, int] = {
     FAN_AUTO: FAN_SPEED_AUTO,
     FAN_LOW: FAN_SPEED_LOW,
+    FAN_MEDIUM_LOW: FAN_SPEED_MEDIUM_LOW,
     FAN_MEDIUM: FAN_SPEED_MEDIUM,
+    FAN_MEDIUM_HIGH: FAN_SPEED_MEDIUM_HIGH,
     FAN_HIGH: FAN_SPEED_HIGH,
 }
 DEVICE_TO_FAN_MODE: dict[int, str] = {v: k for k, v in FAN_MODE_TO_DEVICE.items()}
@@ -76,6 +85,7 @@ class EwpeClimateEntity(EwpeEntity, ClimateEntity):
     """Climate entity backed by an :class:`EwpeDevice`."""
 
     _attr_name = None
+    _attr_translation_key = "ewpe"
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_target_temperature_step = 1
     _attr_min_temp = MIN_TEMP
@@ -88,7 +98,7 @@ class EwpeClimateEntity(EwpeEntity, ClimateEntity):
         HVACMode.DRY,
         HVACMode.FAN_ONLY,
     ]
-    _attr_fan_modes = [FAN_AUTO, FAN_LOW, FAN_MEDIUM, FAN_HIGH]
+    _attr_fan_modes = list(FAN_MODE_TO_DEVICE)
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.FAN_MODE
