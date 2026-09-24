@@ -42,6 +42,7 @@
     },
     "error": {
       "cannot_connect": "Nelze se připojit k zařízení na zadané IP",
+      "device_refused": "Zařízení odmítlo spojení na UDP 7000. Je dostupné, ale na tomto portu nic neposlouchá, nejspíš proto, že v jeho wifi modulu je vypnuto lokální ovládání. Viz část Troubleshooting v README.",
       "invalid_response": "Zařízení odpovědělo neočekávaným paketem",
       "no_devices": "V síti nebyla nalezena žádná zařízení",
       "scan_failed": "Prohledání sítě selhalo",

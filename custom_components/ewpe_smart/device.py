@@ -23,6 +23,7 @@ from .protocol import (
     EwpeConnectionError,
     EwpeError,
     EwpeProtocolError,
+    EwpeRefusedError,
     EwpeTimeout,
     parse_cmd_reply,
     scan,
@@ -213,6 +214,7 @@ __all__ = [
     "EwpeDevice",
     "EwpeError",
     "EwpeProtocolError",
+    "EwpeRefusedError",
     "EwpeTimeout",
     "scan",
 ]
