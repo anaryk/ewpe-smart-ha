@@ -14,6 +14,8 @@ Usage:
     python3 tools/probe.py 192.168.1.50 --decrypt
     python3 tools/probe.py scan 192.168.1.50 --decrypt --bind
     python3 tools/probe.py status 192.168.1.50 --key DEVICEKEY --mac AA:BB:...
+    python3 tools/probe.py status 192.168.1.50 --key DEVICEKEY --mac AA:BB:... \\
+        BuzzerCtrl Buzzer_ON_OFF
     python3 tools/probe.py set 192.168.1.50 --key DEVICEKEY --mac AA:BB:... Quiet=1
 """
 
@@ -21,9 +23,33 @@ from __future__ import annotations
 
 import argparse
 import base64
+import importlib.util
 import json
 import socket
 import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load_params_catalog():
+    """Load params_catalog without triggering ewpe_smart's HA __init__."""
+    path = _REPO_ROOT / "custom_components" / "ewpe_smart" / "params_catalog.py"
+    spec = importlib.util.spec_from_file_location("ewpe_params_catalog", path)
+    if spec is None or spec.loader is None:
+        msg = f"cannot load parameter catalog from {path}"
+        raise ImportError(msg)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_catalog = _load_params_catalog()
+ALL_KNOWN_PARAMS = _catalog.ALL_KNOWN_PARAMS
+SWITCH_PARAM_NAMES = _catalog.SWITCH_PARAM_NAMES
+CORE_SWITCH_PARAMS = _catalog.CORE_SWITCH_PARAMS
+param_batches = _catalog.param_batches
 
 PORT = 7000
 TIMEOUT = 5.0
@@ -36,23 +62,24 @@ V2_KEY = b"{yxAHAY_Lm6pbC/<"
 V2_NONCE = b"\x54\x40\x78\x44\x49\x67\x5a\x51\x6c\x5e\x63\x13"
 V2_AAD = b"qualcomm-test"
 
-# Keep in sync with custom_components/ewpe_smart/const.py STATUS_PARAMS
-STATUS_PARAMS = [
+# Keep in sync with custom_components/ewpe_smart/params_catalog.py
+DISCOVERY_PARAMS = list(ALL_KNOWN_PARAMS)
+
+# Minimal climate core for quick ``probe.py status --runtime`` checks.
+RUNTIME_PARAMS = [
     "Pow",
     "Mod",
     "SetTem",
     "TemUn",
     "WdSpd",
     "TemSen",
-    "SwhSlp",
-    "Tur",
     "Quiet",
-    "Blo",
-    "Health",
-    "Lig",
-    "SvSt",
-    "Air",
+    "Tur",
+    "SwingLfRig",
+    "SwUpDn",
 ]
+
+SWITCH_PARAMS = sorted(SWITCH_PARAM_NAMES | CORE_SWITCH_PARAMS)
 
 
 def _aes_ecb(key: bytes):
@@ -165,6 +192,7 @@ def _send_request(
     *,
     mac: str,
     timeout: float = TIMEOUT,
+    log: bool = True,
 ) -> dict:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(timeout)
@@ -177,7 +205,8 @@ def _send_request(
             reply = _parse_envelope(envelope, key)
         except Exception as err:
             raise ValueError(f"decrypt failed: {err}") from err
-        print(f"[{ip}] ← reply from {addr[0]}:{addr[1]} (proto v{version})")
+        out = sys.stdout if log else sys.stderr
+        print(f"[{ip}] ← reply from {addr[0]}:{addr[1]} (proto v{version})", file=out)
         return reply
     finally:
         sock.close()
@@ -190,22 +219,24 @@ def _send_request_auto(
     *,
     mac: str,
     version: int | None = None,
+    log: bool = True,
 ) -> dict:
     """Send a device-key request, trying v1 then v2 when version is omitted."""
     versions = (version,) if version is not None else (1, 2)
+    out = sys.stdout if log else sys.stderr
     for idx, try_version in enumerate(versions):
         if version is None and len(versions) > 1:
-            print(f"[{ip}] → trying proto v{try_version}...")
+            print(f"[{ip}] → trying proto v{try_version}...", file=out)
         try:
-            return _send_request(ip, key, inner, try_version, mac=mac)
+            return _send_request(ip, key, inner, try_version, mac=mac, log=log)
         except TimeoutError:
             if version is not None or idx == len(versions) - 1:
                 raise
-            print(f"[{ip}]   ✗ v{try_version}: no reply within {TIMEOUT}s")
+            print(f"[{ip}]   ✗ v{try_version}: no reply within {TIMEOUT}s", file=out)
         except (OSError, json.JSONDecodeError, ValueError) as err:
             if version is not None or idx == len(versions) - 1:
                 raise
-            print(f"[{ip}]   ✗ v{try_version}: {err}")
+            print(f"[{ip}]   ✗ v{try_version}: {err}", file=out)
     raise TimeoutError(f"no reply from {ip} on any protocol version")
 
 
@@ -337,20 +368,66 @@ def probe(ip: str, decrypt: bool, do_bind: bool) -> int:
         sock.close()
 
 
-def cmd_status(
-    ip: str, key: str, mac: str, version: int | None, cols: list[str] | None = None
-) -> int:
-    device_key = key.encode("utf-8")
-    asked = cols or STATUS_PARAMS
-    version_label = f"v{version}" if version else "auto"
-    print(f"[{ip}] → status request ({len(asked)} cols, proto {version_label})")
-    try:
+def _fetch_status(
+    ip: str,
+    key: bytes,
+    mac: str,
+    cols: list[str],
+    version: int | None,
+    *,
+    log: bool = True,
+) -> tuple[dict[str, int], list[str]]:
+    """Read status, batching ``cols`` when firmware rejects large requests."""
+    merged_status: dict[str, int] = {}
+    merged_cols: list[str] = []
+    for batch in param_batches(cols):
         reply = _send_request_auto(
             ip,
-            device_key,
-            {"t": "status", "mac": mac, "cols": asked},
+            key,
+            {"t": "status", "mac": mac, "cols": list(batch)},
             mac=mac,
             version=version,
+            log=log,
+        )
+        if reply.get("t") != "dat":
+            raise ValueError(f"unexpected status reply: {reply!r}")
+        reply_cols = reply.get("cols") or []
+        dat = reply.get("dat") or []
+        merged_cols.extend(reply_cols)
+        merged_status.update(dict(zip(reply_cols, dat, strict=False)))
+    return merged_status, merged_cols
+
+
+def cmd_status(
+    ip: str,
+    key: str,
+    mac: str,
+    version: int | None,
+    *,
+    runtime: bool = False,
+    custom_cols: list[str] | None = None,
+    export_cols: bool = False,
+) -> int:
+    device_key = key.encode("utf-8")
+    if custom_cols:
+        request_cols = list(custom_cols)
+        mode_label = "custom"
+    elif runtime:
+        request_cols = RUNTIME_PARAMS
+        mode_label = "runtime"
+    else:
+        request_cols = DISCOVERY_PARAMS
+        mode_label = "discovery"
+    version_label = f"v{version}" if version else "auto"
+    out = sys.stderr if export_cols else sys.stdout
+    print(
+        f"[{ip}] → status request ({len(request_cols)} cols, {mode_label}, "
+        f"proto {version_label}, {len(param_batches(request_cols))} batch(es))",
+        file=out,
+    )
+    try:
+        status, cols = _fetch_status(
+            ip, device_key, mac, request_cols, version, log=not export_cols
         )
     except TimeoutError:
         print(f"[{ip}]   ✗ no reply within {TIMEOUT}s on any protocol version")
@@ -359,22 +436,35 @@ def cmd_status(
         print(f"[{ip}]   ✗ status failed: {err}")
         return 2
 
-    if reply.get("t") != "dat":
-        print(f"[{ip}]   ✗ unexpected reply: {reply}")
-        return 3
-
-    cols = reply.get("cols") or []
-    dat = reply.get("dat") or []
+    if export_cols:
+        print(json.dumps(cols, indent=2))
+        unknown = sorted(set(cols) - set(ALL_KNOWN_PARAMS))
+        if unknown:
+            print(
+                f"[{ip}]   cols not in catalog ({len(unknown)}): {unknown}",
+                file=sys.stderr,
+            )
+        return 0
     print(f"[{ip}]   cols ({len(cols)}): {cols}")
-    for name, value in zip(cols, dat, strict=False):
+    for name, value in status.items():
         print(f"[{ip}]     {name} = {value}")
-    missing = [c for c in asked if c not in cols]
-    print(f"[{ip}]   dropped from reply: {missing or '(none)'}")
-    switch_cols = [c for c in cols if c in STATUS_PARAMS[6:]]
+    if custom_cols:
+        missing = [c for c in request_cols if c not in cols]
+        if missing:
+            print(f"[{ip}]   not in reply: {', '.join(missing)}")
+    switch_cols = [c for c in cols if c in SWITCH_PARAMS]
     if switch_cols:
         print(f"[{ip}]   supported switches: {', '.join(switch_cols)}")
     else:
         print(f"[{ip}]   supported switches: (none in reply)")
+    if custom_cols:
+        print(
+            f"[{ip}]   requested {len(request_cols)} col(s), got {len(cols)} in reply"
+        )
+    else:
+        print(
+            f"[{ip}]   catalog coverage: {len(cols)}/{len(ALL_KNOWN_PARAMS)} known params"
+        )
     return 0
 
 
@@ -481,12 +571,23 @@ def main(argv: list[str]) -> int:
 
     status_parser = subparsers.add_parser("status", help="Read device status")
     _add_device_args(status_parser)
+    status_mode = status_parser.add_mutually_exclusive_group()
+    status_mode.add_argument(
+        "--runtime",
+        action="store_true",
+        help="Poll runtime core params only; default requests full catalog",
+    )
     status_parser.add_argument(
         "cols",
         nargs="*",
         metavar="Col",
-        help="Params to ask for (default: the integration's STATUS_PARAMS). "
+        help="Params to ask for (default: the full parameter catalog). "
         "Pass a name the unit cannot have to see whether it drops unknown cols.",
+    )
+    status_parser.add_argument(
+        "--export-cols",
+        action="store_true",
+        help="Print reply cols as JSON (for updating custom_components/ewpe_smart/data/wire_params.json)",
     )
 
     set_parser = subparsers.add_parser("set", help="Set device parameters")
@@ -509,7 +610,15 @@ def main(argv: list[str]) -> int:
         return rc
 
     if args.command == "status":
-        return cmd_status(args.ip, args.key, args.mac, args.version, args.cols)
+        return cmd_status(
+            args.ip,
+            args.key,
+            args.mac,
+            args.version,
+            runtime=args.runtime,
+            custom_cols=args.cols,
+            export_cols=args.export_cols,
+        )
 
     try:
         params = _parse_params(args.params)
