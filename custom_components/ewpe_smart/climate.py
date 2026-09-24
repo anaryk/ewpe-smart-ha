@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from homeassistant.components.climate import (
+    ATTR_HVAC_MODE,
     FAN_AUTO,
     FAN_HIGH,
     FAN_LOW,
@@ -70,6 +71,15 @@ FAN_MODE_TO_DEVICE: dict[str, int] = {
     FAN_HIGH: FAN_SPEED_HIGH,
 }
 DEVICE_TO_FAN_MODE: dict[int, str] = {v: k for k, v in FAN_MODE_TO_DEVICE.items()}
+
+
+def _hvac_mode_params(hvac_mode: HVACMode) -> dict[str, int]:
+    if hvac_mode == HVACMode.OFF:
+        return {PARAM_POWER: POWER_OFF}
+    device_mode = HVAC_MODE_TO_DEVICE.get(hvac_mode)
+    if device_mode is None:
+        raise ValueError(f"Unsupported hvac_mode: {hvac_mode}")
+    return {PARAM_POWER: POWER_ON, PARAM_MODE: device_mode}
 
 
 async def async_setup_entry(
@@ -144,13 +154,7 @@ class EwpeClimateEntity(EwpeEntity, ClimateEntity):
         return float(value)
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
-        if hvac_mode == HVACMode.OFF:
-            await self._send({PARAM_POWER: POWER_OFF})
-            return
-        device_mode = HVAC_MODE_TO_DEVICE.get(hvac_mode)
-        if device_mode is None:
-            raise ValueError(f"Unsupported hvac_mode: {hvac_mode}")
-        await self._send({PARAM_POWER: POWER_ON, PARAM_MODE: device_mode})
+        await self._send(_hvac_mode_params(hvac_mode))
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
         device_speed = FAN_MODE_TO_DEVICE.get(fan_mode)
@@ -159,10 +163,16 @@ class EwpeClimateEntity(EwpeEntity, ClimateEntity):
         await self._send({PARAM_FAN_SPEED: device_speed})
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
+        # climate.set_temperature may carry hvac_mode; send both in one packet
+        # because the unit beeps once per command.
+        params: dict[str, int] = {}
+        if (hvac_mode := kwargs.get(ATTR_HVAC_MODE)) is not None:
+            params.update(_hvac_mode_params(hvac_mode))
         temperature = kwargs.get(ATTR_TEMPERATURE)
-        if temperature is None:
-            return
-        await self._send({PARAM_SET_TEMP: int(round(float(temperature)))})
+        if temperature is not None:
+            params[PARAM_SET_TEMP] = int(round(float(temperature)))
+        if params:
+            await self._send(params)
 
     async def async_turn_on(self) -> None:
         await self._send({PARAM_POWER: POWER_ON})
