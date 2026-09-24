@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import timedelta
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -33,7 +34,7 @@ _LOGGER = logging.getLogger(__name__)
 type EwpeConfigEntry = ConfigEntry[EwpeCoordinator]
 
 
-class EwpeCoordinator(DataUpdateCoordinator[dict[str, int]]):
+class EwpeCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Polls a single EwpeDevice and surfaces failures to HA."""
 
     def __init__(
@@ -97,7 +98,7 @@ class EwpeCoordinator(DataUpdateCoordinator[dict[str, int]]):
         _LOGGER.debug("Device %s not found on the network", self.device.mac)
         return False
 
-    async def _async_update_data(self) -> dict[str, int]:
+    async def _async_update_data(self) -> dict[str, Any]:
         try:
             return await self.device.get_status()
         except EwpeAuthError as err:

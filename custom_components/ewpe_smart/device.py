@@ -12,11 +12,15 @@ from .const import (
     DEFAULT_TIMEOUT,
     GENERIC_KEY,
     GENERIC_KEY_V2,
-    PARAM_TEMP_SENSOR,
     PROTO_V1,
     PROTO_V2,
-    STATUS_PARAMS,
     TEMP_SENSOR_OFFSET,
+)
+from .params_catalog import (
+    ALL_KNOWN_PARAMS,
+    TEMP_OFFSET_PARAMS,
+    param_batches,
+    poll_params,
 )
 from .protocol import (
     EwpeAuthError,
@@ -57,6 +61,7 @@ class EwpeDevice:
     version: int = PROTO_V1
     timeout: float = DEFAULT_TIMEOUT
     info: dict[str, Any] = field(default_factory=dict)
+    supported_params: list[str] | None = None
     on_version_changed: Callable[[int], None] | None = field(
         default=None, repr=False, compare=False
     )
@@ -173,26 +178,51 @@ class EwpeDevice:
             raise EwpeProtocolError(f"Unexpected scan reply: {reply!r}")
         self.info = _info_from_scan(reply)
 
-    async def get_status(self, cols: list[str] | None = None) -> dict[str, int]:
-        """Read the current state of the device."""
-        if not self.key:
-            raise EwpeError("Device is not bound; call bind() first")
-        cols = cols or STATUS_PARAMS
-        reply = await self._send_with_version_fallback(
-            {"t": "status", "mac": self.mac, "cols": cols},
-        )
+    def _decode_status_reply(
+        self, reply: dict[str, Any]
+    ) -> tuple[dict[str, Any], list[str]]:
         if reply.get("t") != "dat":
             raise EwpeProtocolError(f"Unexpected status reply: {reply!r}")
         if not isinstance(reply.get("dat"), list) or not isinstance(
             reply.get("cols"), list
         ):
             raise EwpeProtocolError(f"Status reply is malformed: {reply!r}")
-        status = dict(zip(reply["cols"], reply["dat"], strict=False))
-        if PARAM_TEMP_SENSOR in status:
-            status[PARAM_TEMP_SENSOR] = (
-                int(status[PARAM_TEMP_SENSOR]) + TEMP_SENSOR_OFFSET
+        reply_cols: list[str] = reply["cols"]
+        status = dict(zip(reply_cols, reply["dat"], strict=False))
+        for param in TEMP_OFFSET_PARAMS:
+            if param in status:
+                raw = status[param]
+                if isinstance(raw, (int, float)):
+                    status[param] = int(raw) + TEMP_SENSOR_OFFSET
+                elif isinstance(raw, str) and raw.lstrip("-").isdigit():
+                    status[param] = int(raw) + TEMP_SENSOR_OFFSET
+        return status, reply_cols
+
+    async def get_status(self, cols: list[str] | None = None) -> dict[str, Any]:
+        """Read the current state of the device."""
+        if not self.key:
+            raise EwpeError("Device is not bound; call bind() first")
+        if cols is None:
+            cols = poll_params(self.supported_params)
+        batches = param_batches(cols) or ((),)
+        merged_status: dict[str, Any] = {}
+        merged_cols: list[str] = []
+        for batch in batches:
+            reply = await self._send_with_version_fallback(
+                {"t": "status", "mac": self.mac, "cols": list(batch)},
             )
-        return status
+            status, reply_cols = self._decode_status_reply(reply)
+            merged_status.update(status)
+            merged_cols.extend(reply_cols)
+        if cols == list(ALL_KNOWN_PARAMS):
+            self.supported_params = list(dict.fromkeys(merged_cols))
+            _LOGGER.info(
+                "Device %s supports %d of %d known parameters",
+                self.host,
+                len(self.supported_params),
+                len(ALL_KNOWN_PARAMS),
+            )
+        return merged_status
 
     async def set_state(self, params: dict[str, int]) -> dict[str, int]:
         """Apply ``params`` (key → numeric value) to the device."""

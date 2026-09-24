@@ -7,7 +7,14 @@ from homeassistant.const import Platform
 DOMAIN = "ewpe_smart"
 MANUFACTURER = "Gree (EWPE Smart)"
 
-PLATFORMS: list[Platform] = [Platform.CLIMATE, Platform.SENSOR, Platform.SWITCH]
+PLATFORMS: list[Platform] = [
+    Platform.CLIMATE,
+    Platform.SENSOR,
+    Platform.SELECT,
+    Platform.SWITCH,
+    Platform.NUMBER,
+    Platform.BINARY_SENSOR,
+]
 
 # Network
 DEFAULT_PORT = 7000
@@ -34,7 +41,7 @@ DEFAULT_UPDATE_INTERVAL = 30
 MIN_UPDATE_INTERVAL = 10
 MAX_UPDATE_INTERVAL = 300
 
-# Indoor temperature sensor offset
+# Temperature sensor offset applied to raw wire values (TemSen, OutEnvTem, …)
 TEMP_SENSOR_OFFSET = -40
 
 # Config entry keys
@@ -66,6 +73,22 @@ PARAM_HEALTH = "Health"
 PARAM_LIG = "Lig"
 PARAM_SVST = "SvSt"
 PARAM_AIR = "Air"
+
+PARAM_SWING_HORIZONTAL = "SwingLfRig"
+PARAM_SWING_VERTICAL = "SwUpDn"
+PARAM_SUB_ZONE_SWING_UD = "DnPUDSwing"
+PARAM_SUB_ZONE_SWING_RIGHT = "DnPRLRSwing"
+PARAM_SUB_ZONE_SWING_LEFT = "DnPLLRSwing"
+PARAM_ANTI_DIRECT_BLOW = "AntiDirectBlow"
+PARAM_SENSOR_LIGHT = "LigSen"
+PARAM_OUTDOOR_TEMP = "OutEnvTem"
+PARAM_DRAIN_WATER_SENSOR = "DwatSen"
+PARAM_HUMIDITY = "Wet"
+PARAM_FAULT = "FaultDisplay"
+PARAM_TEM_REC = "TemRec"
+PARAM_HEAT_COOL_TYPE = "HeatCoolType"
+PARAM_SMART_HEAT_8C = "StHt"
+PARAM_BEEPER = "Buzzer_ON_OFF"
 
 SWITCH_PARAMS: list[str] = [
     PARAM_SLEEP,
@@ -112,3 +135,29 @@ FAN_SPEED_HIGH = 5
 # Temperature limits
 MIN_TEMP = 16
 MAX_TEMP = 30
+
+# Horizontal fixed positions match the native app (direction1–5 → wire values 2–6).
+SWING_HORIZONTAL_DEVICE_TO_OPTION: dict[int, str] = {
+    1: "full_swing",
+    2: "left",
+    3: "left_center",
+    4: "center",
+    5: "right_center",
+    6: "right",
+}
+
+# Vertical fixed positions match the native app (direction1–5 → wire values 2–6).
+# Partial-swing variants (7–11) are experimental — see docs/parameters.md.
+SWING_VERTICAL_DEVICE_TO_OPTION: dict[int, str] = {
+    1: "full_swing",
+    2: "fixed_upper",
+    3: "fixed_upper_middle",
+    4: "fixed_middle",
+    5: "fixed_lower_middle",
+    6: "fixed_lower",
+    7: "swing_upper",
+    8: "swing_upper_middle",
+    9: "swing_middle",
+    10: "swing_lower_middle",
+    11: "swing_lower",
+}

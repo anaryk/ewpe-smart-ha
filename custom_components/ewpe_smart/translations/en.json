@@ -85,6 +85,225 @@
     "sensor": {
       "indoor_temperature": {
         "name": "Indoor temperature"
+      },
+      "outdoor_temperature": {
+        "name": "Outdoor temperature"
+      },
+      "drain_water_sensor": {
+        "name": "Drain water sensor"
+      },
+      "humidity": {
+        "name": "Humidity / wet mode"
+      },
+      "heat_cool_type": {
+        "name": "Heat/cool type"
+      },
+      "fault": {
+        "name": "Fault code"
+      },
+      "pm25": {
+        "name": "PM2.5"
+      },
+      "filter_status": {
+        "name": "Filter status"
+      },
+      "all_errors": {
+        "name": "All errors"
+      },
+      "jf_error_code": {
+        "name": "JF error code"
+      },
+      "subhealth_fault": {
+        "name": "Subhealth fault"
+      },
+      "shutdown_fault": {
+        "name": "Shutdown fault"
+      },
+      "forbidden_blow_period": {
+        "name": "Forbidden blow period"
+      },
+      "environment_temperature": {
+        "name": "Environment temperature"
+      },
+      "indoor_evaporator_temperature": {
+        "name": "Indoor evaporator temperature"
+      },
+      "compressor_temperature": {
+        "name": "Compressor temperature"
+      },
+      "compressor_temperature_alt": {
+        "name": "Compressor temperature (alt)"
+      },
+      "compressor_frequency": {
+        "name": "Compressor frequency"
+      },
+      "outdoor_sensor_temperature": {
+        "name": "Outdoor sensor temperature"
+      },
+      "auto_clean_status": {
+        "name": "Auto clean status"
+      },
+      "auto_clean_status_extended": {
+        "name": "Auto clean status (extended)"
+      },
+      "power_reduce_type": {
+        "name": "Power reduce type"
+      },
+      "power_reduce_gear": {
+        "name": "Power reduce gear"
+      },
+      "add0_1": {
+        "name": "Temperature offset 0.1"
+      },
+      "add0_5": {
+        "name": "Temperature offset 0.5"
+      },
+      "apptimer": {
+        "name": "App timer"
+      },
+      "assht": {
+        "name": "Assisted heat"
+      },
+      "blktemcom": {
+        "name": "Block temperature compensation"
+      },
+      "coolmod": {
+        "name": "Cool mode variant"
+      },
+      "dfpoint": {
+        "name": "Defrost point"
+      },
+      "dmod": {
+        "name": "Dry mode variant"
+      },
+      "dwatful": {
+        "name": "Drain water full"
+      },
+      "dwet": {
+        "name": "Drain wet state"
+      },
+      "elcallkwhclr": {
+        "name": "Electricity kWh clear"
+      },
+      "elcen": {
+        "name": "Electricity enable"
+      },
+      "envfun": {
+        "name": "Environment function"
+      },
+      "heatcool": {
+        "name": "Heat/cool state"
+      },
+      "imgupdatecol": {
+        "name": "Image update column"
+      },
+      "imgversta": {
+        "name": "Image version status"
+      },
+      "modelnew": {
+        "name": "Model new"
+      },
+      "modeltype": {
+        "name": "Model type"
+      },
+      "newtimer": {
+        "name": "New timer"
+      },
+      "uniquecode": {
+        "name": "Unique code"
+      },
+      "vocctl": {
+        "name": "Voice control"
+      },
+      "vocidiom": {
+        "name": "Voice idiom"
+      },
+      "vocrole": {
+        "name": "Voice role"
+      },
+      "vocupdatecol": {
+        "name": "Voice update column"
+      },
+      "vocversta": {
+        "name": "Voice version status"
+      },
+      "wind": {
+        "name": "Wind feel"
+      },
+      "bc": {
+        "name": "Broadcast code"
+      },
+      "busvol": {
+        "name": "Bus voltage"
+      },
+      "header": {
+        "name": "Packet header"
+      },
+      "hid": {
+        "name": "Hardware ID"
+      },
+      "host": {
+        "name": "Cloud host"
+      },
+      "mac": {
+        "name": "MAC address"
+      },
+      "mid": {
+        "name": "Module ID"
+      },
+      "name": {
+        "name": "Reported name"
+      },
+      "vender": {
+        "name": "Vendor"
+      },
+      "ver": {
+        "name": "Firmware version"
+      },
+      "wifireset": {
+        "name": "Wi-Fi reset"
+      },
+      "wifistatus": {
+        "name": "Wi-Fi status"
+      },
+      "envarea1st": {
+        "name": "Zone 1 environment"
+      },
+      "envarea2st": {
+        "name": "Zone 2 environment"
+      },
+      "envarea3st": {
+        "name": "Zone 3 environment"
+      },
+      "envarea4st": {
+        "name": "Zone 4 environment"
+      },
+      "envarea5st": {
+        "name": "Zone 5 environment"
+      },
+      "envarea6st": {
+        "name": "Zone 6 environment"
+      },
+      "envarea7st": {
+        "name": "Zone 7 environment"
+      },
+      "envarea8st": {
+        "name": "Zone 8 environment"
+      },
+      "envarea9st": {
+        "name": "Zone 9 environment"
+      },
+      "estateinsta21": {
+        "name": "Install flag 21"
+      },
+      "estateinsta22": {
+        "name": "Install flag 22"
+      },
+      "estateinsta23": {
+        "name": "Install flag 23"
+      },
+      "estateinsta24": {
+        "name": "Install flag 24"
       }
     },
     "switch": {
@@ -111,6 +330,221 @@
       },
       "fresh_air": {
         "name": "Fresh air"
+      },
+      "smart_slp_mod": {
+        "name": "Smart sleep mode"
+      },
+      "slp_mod": {
+        "name": "Sleep mode type"
+      },
+      "emod": {
+        "name": "Economy mode"
+      },
+      "nobody_save": {
+        "name": "Nobody-home saving"
+      },
+      "anti_dazzle": {
+        "name": "Anti-dazzle"
+      },
+      "led_light": {
+        "name": "LED light"
+      },
+      "led_light_zone": {
+        "name": "LED light (zone)"
+      },
+      "display_state_switch": {
+        "name": "Display state"
+      },
+      "buzzer_ctrl": {
+        "name": "Beeper (BuzzerCtrl)"
+      },
+      "buzzer_on_off": {
+        "name": "Beeper (Buzzer_ON_OFF)"
+      },
+      "anti_direct_blow": {
+        "name": "Anti direct blow"
+      },
+      "light_sensor": {
+        "name": "Light sensor"
+      },
+      "smart_heat_8c": {
+        "name": "8 °C heat"
+      },
+      "child_lock": {
+        "name": "Child lock"
+      },
+      "auto_clean": {
+        "name": "Auto clean"
+      },
+      "uvc_control": {
+        "name": "UV-C control"
+      },
+      "cool_feel": {
+        "name": "Cool feel"
+      },
+      "smart_wind": {
+        "name": "Smart wind"
+      },
+      "auto_pow_reduce": {
+        "name": "Auto power reduce"
+      },
+      "unoccupied_shutdown": {
+        "name": "Unoccupied shutdown"
+      },
+      "timer_start": {
+        "name": "Timer start"
+      },
+      "timer_stop": {
+        "name": "Timer stop"
+      }
+    },
+    "select": {
+      "swing_horizontal": {
+        "name": "Horizontal swing",
+        "state": {
+          "full_swing": "Full swing",
+          "left": "Left",
+          "left_center": "Left center",
+          "center": "Center",
+          "right_center": "Right center",
+          "right": "Right"
+        }
+      },
+      "swing_vertical": {
+        "name": "Vertical swing",
+        "state": {
+          "full_swing": "Full swing",
+          "fixed_upper": "Fixed upper",
+          "fixed_upper_middle": "Fixed upper middle",
+          "fixed_middle": "Fixed middle",
+          "fixed_lower_middle": "Fixed lower middle",
+          "fixed_lower": "Fixed lower",
+          "swing_upper": "Swing upper",
+          "swing_upper_middle": "Swing upper middle",
+          "swing_middle": "Swing middle",
+          "swing_lower_middle": "Swing lower middle",
+          "swing_lower": "Swing lower"
+        }
+      },
+      "sub_zone_swing_ud": {
+        "name": "Sub-zone up/down swing",
+        "state": {
+          "full_swing": "Full swing",
+          "fixed_upper": "Fixed upper",
+          "fixed_upper_middle": "Fixed upper middle",
+          "fixed_middle": "Fixed middle",
+          "fixed_lower_middle": "Fixed lower middle",
+          "fixed_lower": "Fixed lower",
+          "swing_upper": "Swing upper",
+          "swing_upper_middle": "Swing upper middle",
+          "swing_middle": "Swing middle",
+          "swing_lower_middle": "Swing lower middle",
+          "swing_lower": "Swing lower"
+        }
+      },
+      "sub_zone_swing_right_lr": {
+        "name": "Sub-zone right left/right swing",
+        "state": {
+          "full_swing": "Full swing",
+          "left": "Left",
+          "left_center": "Left center",
+          "center": "Center",
+          "right_center": "Right center",
+          "right": "Right"
+        }
+      },
+      "sub_zone_swing_left_lr": {
+        "name": "Sub-zone left left/right swing",
+        "state": {
+          "full_swing": "Full swing",
+          "left": "Left",
+          "left_center": "Left center",
+          "center": "Center",
+          "right_center": "Right center",
+          "right": "Right"
+        }
+      }
+    },
+    "binary_sensor": {
+      "replace_hepa": {
+        "name": "Replace HEPA filter"
+      },
+      "has_timer": {
+        "name": "Has timer"
+      },
+      "motion": {
+        "name": "Motion"
+      },
+      "drain_pump": {
+        "name": "Drain pump"
+      }
+    },
+    "number": {
+      "timer_on_minutes_left": {
+        "name": "Timer on minutes left"
+      },
+      "timer_off_minutes_left": {
+        "name": "Timer off minutes left"
+      },
+      "timer_loop_times": {
+        "name": "Timer loop times"
+      },
+      "unoccupied_off_time": {
+        "name": "Unoccupied off time"
+      },
+      "sleep_curve_low_1": {
+        "name": "Sleep curve low step 1"
+      },
+      "sleep_curve_low_2": {
+        "name": "Sleep curve low step 2"
+      },
+      "sleep_curve_low_3": {
+        "name": "Sleep curve low step 3"
+      },
+      "sleep_curve_low_4": {
+        "name": "Sleep curve low step 4"
+      },
+      "sleep_curve_low_5": {
+        "name": "Sleep curve low step 5"
+      },
+      "sleep_curve_low_6": {
+        "name": "Sleep curve low step 6"
+      },
+      "sleep_curve_low_7": {
+        "name": "Sleep curve low step 7"
+      },
+      "sleep_curve_low_8": {
+        "name": "Sleep curve low step 8"
+      },
+      "sleep_curve_high_1": {
+        "name": "Sleep curve high step 1"
+      },
+      "sleep_curve_high_2": {
+        "name": "Sleep curve high step 2"
+      },
+      "sleep_curve_high_3": {
+        "name": "Sleep curve high step 3"
+      },
+      "sleep_curve_high_4": {
+        "name": "Sleep curve high step 4"
+      },
+      "sleep_curve_high_5": {
+        "name": "Sleep curve high step 5"
+      },
+      "sleep_curve_high_6": {
+        "name": "Sleep curve high step 6"
+      },
+      "sleep_curve_high_7": {
+        "name": "Sleep curve high step 7"
+      },
+      "sleep_curve_high_8": {
+        "name": "Sleep curve high step 8"
+      },
+      "temperature_display_offset": {
+        "name": "Temperature display offset"
+      },
+      "up_down_fan_port": {
+        "name": "Up/down fan port"
       }
     }
   },
