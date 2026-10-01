@@ -70,6 +70,41 @@ Partial-swing wire values are available in `select.swing_vertical` but caused
 **full-swing misbehaviour** when selected on this unit. Prefer fixed positions
 (2–6) unless verified on your firmware. See [parameters.md](parameters.md).
 
+## Second unit: module U-W04ACV1.08 (2026-10)
+
+Reported by amandoippel from a probe run of `feature/probe-catalog`. Module
+`362001062107+U-W04ACV1.08.bin`, `ver` V2.0.0, proto v2, `ModelType` 32776.
+
+- **Status batch size.** The unit ignores a `status` request with 50 columns.
+  Batches of 25 are answered (6 batches for the full catalog). The limit
+  measured on this unit is about 30 columns.
+- **Protocol auto-detect.** With auto-detect, every batch first waits out the
+  5 s v1 timeout before v2 answers, about 35 s for a full read. With
+  `--version 2` the same read takes 3.9 s. The probe now reuses the version
+  that answered the first batch.
+- **Catalog coverage.** 103 of 140 catalog keys returned, none outside the
+  catalog. Not returned: `AntiDirectBlow`, `AutoCleanSta`, `AutoCleanStaEx`,
+  `AutoPowReduce`, `BuzzerCtrl`, `Buzzer_ON_OFF`, `ChildLock`, `CompressorFqy`,
+  `CompressorTem`, `CoolFeel`, `CpsTem`, `DFPoint`, `Dazzling`, `ElcEn`,
+  `EnvTem`, `FaultDisplay`, `InEvaTem`, `LedLight`, `ModelNew`, `NewTimer`,
+  `OutEnvTem`, `PowReduceGear`, `PowReduceType`, `ShutdownFault`, `SmartSlpMod`,
+  `SubhealthFault`, `TemsSenOut`, `UniqueCode`, `UvcControl`, `busVol`,
+  `estateInsta21` to `estateInsta24`, `header`, `wifiReset`, `wifiStatus`.
+- **A returned key does not mean the feature exists.** The `supported
+  switches` list holds 20 keys. Tested one by one on the unit:
+
+| Key | Result |
+|-----|--------|
+| `Air`, `LedLig`, `SmartWind`, `AutoClean`, `LigSen` | refused or no effect (reads back 0 after a write) |
+| `DsplySt` | accepted, nothing visible changes |
+| `TmrOn`, `TmrOff`, `HasTmr` | always refused |
+| `TmrOnMinLf`, `TmrOffMinLf` | stored, but the timer never starts |
+| `Blo`, `Health`, `Lig`, `Quiet`, `Tur`, `SvSt`, `SwhSlp`, `StHt` | work |
+| `SlpMod` with the `Slp1H*` / `Slp1L*` curve | work |
+| both swing axes | work |
+
+The unit's own timer cannot be armed over the local protocol.
+
 ## Fan: step, quiet and turbo
 
 The EWPE Smart app shows one control (Auto, Low → High, Quiet, Turbo). The
