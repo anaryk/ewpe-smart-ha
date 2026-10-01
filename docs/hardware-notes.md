@@ -109,9 +109,9 @@ The unit's own timer cannot be armed over the local protocol.
 
 The EWPE Smart app shows one control (Auto, Low → High, Quiet, Turbo). The
 integration keeps the three wire keys apart: the fan step is the climate fan
-mode, quiet and turbo are switches. The tests below show the unit treats them as
-independent flags and keeps the fan step underneath, so writing one key never
-has to rewrite the others.
+mode, quiet and turbo are switches. The unit reports quiet and turbo as
+independent flags, but it changes the fan step itself after quiet is switched
+on, so a quiet switch cannot restore the step it replaced.
 
 #### Quiet on/off alone (2026-09-23)
 
@@ -126,12 +126,17 @@ read about 5 s after each set:
 | 11:02:32 | `Quiet=0` | `Quiet=0` | `WdSpd=2 Quiet=0 Tur=0` (same 25 s later) |
 | 11:03:04 | `Pow=0 WdSpd=0` | `Pow=0 WdSpd=0` | back to start |
 
-- `WdSpd` keeps its step through quiet on and off, so `{Quiet: 0}` alone is
-  safe on this unit.
+- `WdSpd` kept its step at 25 s. It does not hold: about 30 s after `Quiet=2`
+  the unit sets `WdSpd` to `1` (`low`) by itself (observed 2026-09-28 in Home
+  Assistant state history, `auto` at 20:50:16, `low` at 20:50:45, with no
+  `WdSpd` write in between). Switching quiet off does not restore the earlier
+  step, the fan stays on `low` until `WdSpd` is written.
+- Not tested: whether this depends on firmware, whether `Quiet=1` behaves the
+  same, and whether turbo has a similar effect.
 - The unit accepts `Quiet=1` and reports back 1. Idle value is 0. Newer apps
   send `Quiet=2` (see [parameters.md](parameters.md#quiet-quiet)); whether 1
   holds for longer than 25 s was not tested here.
-- `WdSpd` still reads the stored step while quiet is on.
+- `WdSpd` still read the stored step 25 s after quiet was switched on.
 
 #### Quiet and turbo together (2026-09-23)
 

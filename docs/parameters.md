@@ -45,9 +45,12 @@ always see Celsius degrees.
 ## Fan (`WdSpd`, `Quiet`, `Tur`)
 
 The native EWPE Smart app shows auto, five fan steps, quiet and turbo as one
-control. On the wire they are three independent keys: the unit keeps `WdSpd`
-while quiet or turbo is on and can report both flags on at once (see
-[hardware-notes.md](hardware-notes.md#quiet-and-turbo-together-2026-09-23)).
+control. On the wire they are three keys: the unit can report quiet and turbo
+on at once (see
+[hardware-notes.md](hardware-notes.md#quiet-and-turbo-together-2026-09-23)),
+and it sets `WdSpd` to `low` about 30 s after quiet is switched on without
+restoring the step when quiet is switched off (see
+[hardware-notes.md](hardware-notes.md#fan-step-quiet-and-turbo)).
 The integration exposes `WdSpd` as the climate fan mode and `Quiet` / `Tur` as
 switches.
 
@@ -91,7 +94,8 @@ Value `3` (`mode3`) appears in MQTT bridges ([vsimonaitis/gree-hvac-mqtt-bridge]
 
 - The quiet switch **writes** `Quiet=2` on (`QUIET_MODE_ON` in `const.py`), as
   the Gree and EWPE Smart apps do, and `Quiet=0` off. The turbo switch writes
-  `Tur=1` / `Tur=0`. Neither touches `WdSpd` or the other flag.
+  `Tur=1` / `Tur=0`. Neither writes `WdSpd` or the other flag, and the unit
+  changes `WdSpd` on its own after quiet.
 - Both switches **read** any non-zero value as on.
 - On the tested unit both 1 and 2 read back as written. `Quiet=2` held for
   51 minutes on 2026-09-14 until it was switched off; `Quiet=1` was only

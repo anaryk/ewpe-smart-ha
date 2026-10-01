@@ -28,5 +28,6 @@ entity churn after the first successful poll.
 by **−40 °C** in `device.get_status()` before entities see them.
 
 **Fan:** the fan step (`WdSpd`) is the climate entity's fan mode; quiet
-(`Quiet`) and turbo (`Tur`) are separate switches. The unit keeps the fan step
-while quiet or turbo is on, and reports both flags independently.
+(`Quiet`) and turbo (`Tur`) are separate switches. The unit reports both flags
+independently, but sets `WdSpd` to low about 30 s after quiet is switched on
+and does not restore the step when quiet is switched off.
