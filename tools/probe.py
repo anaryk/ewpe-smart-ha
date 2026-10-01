@@ -220,15 +220,19 @@ def _send_request_auto(
     mac: str,
     version: int | None = None,
     log: bool = True,
-) -> dict:
-    """Send a device-key request, trying v1 then v2 when version is omitted."""
+) -> tuple[dict, int]:
+    """Send a device-key request, trying v1 then v2 when version is omitted.
+
+    Returns the reply and the protocol version that answered.
+    """
     versions = (version,) if version is not None else (1, 2)
     out = sys.stdout if log else sys.stderr
     for idx, try_version in enumerate(versions):
         if version is None and len(versions) > 1:
             print(f"[{ip}] → trying proto v{try_version}...", file=out)
         try:
-            return _send_request(ip, key, inner, try_version, mac=mac, log=log)
+            reply = _send_request(ip, key, inner, try_version, mac=mac, log=log)
+            return reply, try_version
         except TimeoutError:
             if version is not None or idx == len(versions) - 1:
                 raise
@@ -381,7 +385,9 @@ def _fetch_status(
     merged_status: dict[str, int] = {}
     merged_cols: list[str] = []
     for batch in param_batches(cols):
-        reply = _send_request_auto(
+        # Reuse the version that answered the first batch instead of waiting
+        # out a v1 timeout on every batch of a v2 unit.
+        reply, version = _send_request_auto(
             ip,
             key,
             {"t": "status", "mac": mac, "cols": list(batch)},
@@ -487,7 +493,7 @@ def cmd_set(
     version_label = f"v{version}" if version else "auto"
     print(f"[{ip}] → set {dict(zip(opt, values, strict=True))} (proto {version_label})")
     try:
-        reply = _send_request_auto(
+        reply, _ = _send_request_auto(
             ip,
             device_key,
             {"t": "cmd", "mac": mac, "opt": opt, "p": values},
