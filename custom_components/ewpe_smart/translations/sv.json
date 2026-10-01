@@ -1,0 +1,556 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "EWPE Smart",
+        "description": "Välj hur du vill lägga till en EWPE Smart-enhet",
+        "menu_options": {
+          "manual": "Ange IP-adress manuellt",
+          "discover": "Sök igenom det lokala nätverket"
+        }
+      },
+      "manual": {
+        "title": "Lägg till enhet via IP",
+        "data": {
+          "host": "IP-adress",
+          "name": "Visningsnamn (valfritt)"
+        }
+      },
+      "discover": {
+        "title": "Sök igenom nätverket",
+        "data": {
+          "broadcast": "Broadcast-adress"
+        }
+      },
+      "pick_device": {
+        "title": "Välj en enhet",
+        "data": {
+          "host": "Enhet"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Autentisera igen",
+        "description": "Enhetens nyckel avvisades. Slå av och på enheten om du nyligen har återställt den och klicka sedan på Skicka för att koppla den på nytt."
+      },
+      "reconfigure": {
+        "title": "Ändra IP-adress",
+        "description": "Ange enhetens nuvarande IP-adress. Nyckeln hämtas på nytt när du sparar.",
+        "data": {
+          "host": "IP-adress"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Det gick inte att nå enheten på den angivna IP-adressen",
+      "device_refused": "Enheten avvisade anslutningen på UDP 7000. Den går att nå, men inget lyssnar på porten, troligen för att lokal styrning är avstängd i dess wifi-modul. Se avsnittet om felsökning i README.",
+      "invalid_response": "Enheten svarade med oväntat innehåll",
+      "no_devices": "Inga enheter hittades i nätverket",
+      "scan_failed": "Nätverkssökningen misslyckades",
+      "unknown": "Oväntat fel"
+    },
+    "abort": {
+      "already_configured": "Enheten är redan konfigurerad",
+      "reauth_successful": "Autentiseringen lyckades",
+      "reconfigure_successful": "IP-adressen har uppdaterats",
+      "wrong_device": "IP-adressen tillhör en annan enhet"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Inställningar för EWPE Smart",
+        "data": {
+          "update_interval": "Uppdateringsintervall (sekunder)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "climate": {
+      "ewpe": {
+        "state_attributes": {
+          "fan_mode": {
+            "state": {
+              "auto": "Auto",
+              "low": "Låg",
+              "medium_low": "Medellåg",
+              "medium": "Medel",
+              "medium_high": "Medelhög",
+              "high": "Hög"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "indoor_temperature": {
+        "name": "Innetemperatur"
+      },
+      "outdoor_temperature": {
+        "name": "Utetemperatur"
+      },
+      "drain_water_sensor": {
+        "name": "Kondensvattensensor"
+      },
+      "humidity": {
+        "name": "Luftfuktighet / fuktläge"
+      },
+      "heat_cool_type": {
+        "name": "Typ av värme/kyla"
+      },
+      "fault": {
+        "name": "Felkod"
+      },
+      "pm25": {
+        "name": "PM2.5"
+      },
+      "filter_status": {
+        "name": "Filterstatus"
+      },
+      "all_errors": {
+        "name": "Alla fel"
+      },
+      "jf_error_code": {
+        "name": "JF-felkod"
+      },
+      "subhealth_fault": {
+        "name": "Subhealth-fel"
+      },
+      "shutdown_fault": {
+        "name": "Avstängningsfel"
+      },
+      "forbidden_blow_period": {
+        "name": "Blåsförbudsperiod"
+      },
+      "environment_temperature": {
+        "name": "Omgivningstemperatur"
+      },
+      "indoor_evaporator_temperature": {
+        "name": "Inomhusförångarens temperatur"
+      },
+      "compressor_temperature": {
+        "name": "Kompressortemperatur"
+      },
+      "compressor_temperature_alt": {
+        "name": "Kompressortemperatur (alt)"
+      },
+      "compressor_frequency": {
+        "name": "Kompressorfrekvens"
+      },
+      "outdoor_sensor_temperature": {
+        "name": "Utomhussensorns temperatur"
+      },
+      "auto_clean_status": {
+        "name": "Status för självrengöring"
+      },
+      "auto_clean_status_extended": {
+        "name": "Status för självrengöring (utökad)"
+      },
+      "power_reduce_type": {
+        "name": "Typ av effektreducering"
+      },
+      "power_reduce_gear": {
+        "name": "Steg för effektreducering"
+      },
+      "add0_1": {
+        "name": "Temperaturjustering 0,1"
+      },
+      "add0_5": {
+        "name": "Temperaturjustering 0,5"
+      },
+      "apptimer": {
+        "name": "Apptimer"
+      },
+      "assht": {
+        "name": "Tillsatsvärme"
+      },
+      "blktemcom": {
+        "name": "Blockera temperaturkompensation"
+      },
+      "coolmod": {
+        "name": "Variant av kylläge"
+      },
+      "dfpoint": {
+        "name": "Avfrostningspunkt"
+      },
+      "dmod": {
+        "name": "Variant av torkläge"
+      },
+      "dwatful": {
+        "name": "Kondensvatten fullt"
+      },
+      "dwet": {
+        "name": "Kondensvattentillstånd"
+      },
+      "elcallkwhclr": {
+        "name": "Nollställ kWh"
+      },
+      "elcen": {
+        "name": "Aktivera elmätning"
+      },
+      "envfun": {
+        "name": "Miljöfunktion"
+      },
+      "heatcool": {
+        "name": "Värme/kyla-läge"
+      },
+      "imgupdatecol": {
+        "name": "Bilduppdatering, kolumn"
+      },
+      "imgversta": {
+        "name": "Bildversion, status"
+      },
+      "modelnew": {
+        "name": "Ny modell"
+      },
+      "modeltype": {
+        "name": "Modelltyp"
+      },
+      "newtimer": {
+        "name": "Ny timer"
+      },
+      "uniquecode": {
+        "name": "Unik kod"
+      },
+      "vocctl": {
+        "name": "VOC-styrning"
+      },
+      "vocidiom": {
+        "name": "VOC-idiom"
+      },
+      "vocrole": {
+        "name": "VOC-roll"
+      },
+      "vocupdatecol": {
+        "name": "VOC-uppdatering, kolumn"
+      },
+      "vocversta": {
+        "name": "VOC-version, status"
+      },
+      "wind": {
+        "name": "Vindkänsla"
+      },
+      "bc": {
+        "name": "Broadcast-kod"
+      },
+      "busvol": {
+        "name": "Busspänning"
+      },
+      "header": {
+        "name": "Paketrubrik"
+      },
+      "hid": {
+        "name": "Hårdvaru-ID"
+      },
+      "host": {
+        "name": "Molnvärd"
+      },
+      "mac": {
+        "name": "MAC-adress"
+      },
+      "mid": {
+        "name": "Modul-ID"
+      },
+      "name": {
+        "name": "Rapporterat namn"
+      },
+      "vender": {
+        "name": "Tillverkare"
+      },
+      "ver": {
+        "name": "Firmwareversion"
+      },
+      "wifireset": {
+        "name": "Wi-Fi-återställning"
+      },
+      "wifistatus": {
+        "name": "Wi-Fi-status"
+      },
+      "envarea1st": {
+        "name": "Zon 1, miljö"
+      },
+      "envarea2st": {
+        "name": "Zon 2, miljö"
+      },
+      "envarea3st": {
+        "name": "Zon 3, miljö"
+      },
+      "envarea4st": {
+        "name": "Zon 4, miljö"
+      },
+      "envarea5st": {
+        "name": "Zon 5, miljö"
+      },
+      "envarea6st": {
+        "name": "Zon 6, miljö"
+      },
+      "envarea7st": {
+        "name": "Zon 7, miljö"
+      },
+      "envarea8st": {
+        "name": "Zon 8, miljö"
+      },
+      "envarea9st": {
+        "name": "Zon 9, miljö"
+      },
+      "estateinsta21": {
+        "name": "Installationsflagga 21"
+      },
+      "estateinsta22": {
+        "name": "Installationsflagga 22"
+      },
+      "estateinsta23": {
+        "name": "Installationsflagga 23"
+      },
+      "estateinsta24": {
+        "name": "Installationsflagga 24"
+      }
+    },
+    "switch": {
+      "sleep": {
+        "name": "Sömn"
+      },
+      "turbo": {
+        "name": "Turbo"
+      },
+      "quiet": {
+        "name": "Tyst"
+      },
+      "xfan": {
+        "name": "X-Fan"
+      },
+      "health": {
+        "name": "Hälsa"
+      },
+      "display_light": {
+        "name": "Displaylampa"
+      },
+      "energy_save": {
+        "name": "Energisparläge"
+      },
+      "fresh_air": {
+        "name": "Friskluft"
+      },
+      "smart_slp_mod": {
+        "name": "Smart sömnläge"
+      },
+      "slp_mod": {
+        "name": "Typ av sömnläge"
+      },
+      "emod": {
+        "name": "Ekonomiläge"
+      },
+      "nobody_save": {
+        "name": "Besparing när ingen är hemma"
+      },
+      "anti_dazzle": {
+        "name": "Bländskydd"
+      },
+      "led_light": {
+        "name": "LED-lampa"
+      },
+      "led_light_zone": {
+        "name": "LED-lampa (zon)"
+      },
+      "display_state_switch": {
+        "name": "Displaytillstånd"
+      },
+      "buzzer_ctrl": {
+        "name": "Pip (BuzzerCtrl)"
+      },
+      "buzzer_on_off": {
+        "name": "Pip (Buzzer_ON_OFF)"
+      },
+      "anti_direct_blow": {
+        "name": "Skydd mot direkt luftström"
+      },
+      "light_sensor": {
+        "name": "Ljussensor"
+      },
+      "smart_heat_8c": {
+        "name": "8 °C-värme"
+      },
+      "child_lock": {
+        "name": "Barnlås"
+      },
+      "auto_clean": {
+        "name": "Självrengöring"
+      },
+      "uvc_control": {
+        "name": "UV-C-styrning"
+      },
+      "cool_feel": {
+        "name": "Kylkänsla"
+      },
+      "smart_wind": {
+        "name": "Smart luftström"
+      },
+      "auto_pow_reduce": {
+        "name": "Automatisk effektreducering"
+      },
+      "unoccupied_shutdown": {
+        "name": "Avstängning vid frånvaro"
+      },
+      "timer_start": {
+        "name": "Timerstart"
+      },
+      "timer_stop": {
+        "name": "Timerstopp"
+      }
+    },
+    "select": {
+      "swing_horizontal": {
+        "name": "Horisontell svängning",
+        "state": {
+          "full_swing": "Full svängning",
+          "left": "Vänster",
+          "left_center": "Vänster mitt",
+          "center": "Mitten",
+          "right_center": "Höger mitt",
+          "right": "Höger"
+        }
+      },
+      "swing_vertical": {
+        "name": "Vertikal svängning",
+        "state": {
+          "full_swing": "Full svängning",
+          "fixed_upper": "Fast övre",
+          "fixed_upper_middle": "Fast övre mitt",
+          "fixed_middle": "Fast mitten",
+          "fixed_lower_middle": "Fast nedre mitt",
+          "fixed_lower": "Fast nedre",
+          "swing_upper": "Svänger övre",
+          "swing_upper_middle": "Svänger övre mitt",
+          "swing_middle": "Svänger mitten",
+          "swing_lower_middle": "Svänger nedre mitt",
+          "swing_lower": "Svänger nedre"
+        }
+      },
+      "sub_zone_swing_ud": {
+        "name": "Delzon, svängning upp/ned",
+        "state": {
+          "full_swing": "Full svängning",
+          "fixed_upper": "Fast övre",
+          "fixed_upper_middle": "Fast övre mitt",
+          "fixed_middle": "Fast mitten",
+          "fixed_lower_middle": "Fast nedre mitt",
+          "fixed_lower": "Fast nedre",
+          "swing_upper": "Svänger övre",
+          "swing_upper_middle": "Svänger övre mitt",
+          "swing_middle": "Svänger mitten",
+          "swing_lower_middle": "Svänger nedre mitt",
+          "swing_lower": "Svänger nedre"
+        }
+      },
+      "sub_zone_swing_right_lr": {
+        "name": "Delzon höger, svängning vänster/höger",
+        "state": {
+          "full_swing": "Full svängning",
+          "left": "Vänster",
+          "left_center": "Vänster mitt",
+          "center": "Mitten",
+          "right_center": "Höger mitt",
+          "right": "Höger"
+        }
+      },
+      "sub_zone_swing_left_lr": {
+        "name": "Delzon vänster, svängning vänster/höger",
+        "state": {
+          "full_swing": "Full svängning",
+          "left": "Vänster",
+          "left_center": "Vänster mitt",
+          "center": "Mitten",
+          "right_center": "Höger mitt",
+          "right": "Höger"
+        }
+      }
+    },
+    "binary_sensor": {
+      "replace_hepa": {
+        "name": "Byt HEPA-filter"
+      },
+      "has_timer": {
+        "name": "Har timer"
+      },
+      "motion": {
+        "name": "Rörelse"
+      },
+      "drain_pump": {
+        "name": "Dräneringspump"
+      }
+    },
+    "number": {
+      "timer_on_minutes_left": {
+        "name": "Minuter kvar till timerstart"
+      },
+      "timer_off_minutes_left": {
+        "name": "Minuter kvar till timerstopp"
+      },
+      "timer_loop_times": {
+        "name": "Antal timerupprepningar"
+      },
+      "unoccupied_off_time": {
+        "name": "Avstängningstid vid frånvaro"
+      },
+      "sleep_curve_low_1": {
+        "name": "Sömnkurva låg, steg 1"
+      },
+      "sleep_curve_low_2": {
+        "name": "Sömnkurva låg, steg 2"
+      },
+      "sleep_curve_low_3": {
+        "name": "Sömnkurva låg, steg 3"
+      },
+      "sleep_curve_low_4": {
+        "name": "Sömnkurva låg, steg 4"
+      },
+      "sleep_curve_low_5": {
+        "name": "Sömnkurva låg, steg 5"
+      },
+      "sleep_curve_low_6": {
+        "name": "Sömnkurva låg, steg 6"
+      },
+      "sleep_curve_low_7": {
+        "name": "Sömnkurva låg, steg 7"
+      },
+      "sleep_curve_low_8": {
+        "name": "Sömnkurva låg, steg 8"
+      },
+      "sleep_curve_high_1": {
+        "name": "Sömnkurva hög, steg 1"
+      },
+      "sleep_curve_high_2": {
+        "name": "Sömnkurva hög, steg 2"
+      },
+      "sleep_curve_high_3": {
+        "name": "Sömnkurva hög, steg 3"
+      },
+      "sleep_curve_high_4": {
+        "name": "Sömnkurva hög, steg 4"
+      },
+      "sleep_curve_high_5": {
+        "name": "Sömnkurva hög, steg 5"
+      },
+      "sleep_curve_high_6": {
+        "name": "Sömnkurva hög, steg 6"
+      },
+      "sleep_curve_high_7": {
+        "name": "Sömnkurva hög, steg 7"
+      },
+      "sleep_curve_high_8": {
+        "name": "Sömnkurva hög, steg 8"
+      },
+      "temperature_display_offset": {
+        "name": "Justering av temperaturvisning"
+      },
+      "up_down_fan_port": {
+        "name": "Fläktport upp/ned"
+      }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Det gick inte att skicka kommandot till enheten: {error}"
+    }
+  }
+}
