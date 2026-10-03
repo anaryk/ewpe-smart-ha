@@ -164,6 +164,26 @@ Architecture and discovery flow: **[docs/integration.md](docs/integration.md)**
 Same value as `climate.current_temperature`, exposed separately for history
 graphs and automations.
 
+## Actions
+
+### `ewpe_smart.set_state`
+
+The unit beeps on every command it receives. Mode, target temperature and fan mode are separate properties of the climate entity, so an automation that changes several of them beeps once per call. `ewpe_smart.set_state` takes any combination of the three and sends them in one command:
+
+```yaml
+action: ewpe_smart.set_state
+target:
+  entity_id: climate.living_room_ac
+data:
+  hvac_mode: heat
+  temperature: 22
+  fan_mode: quiet
+```
+
+Every field is optional, but at least one is required. Values are checked before anything is sent: an unsupported mode or fan mode, or a temperature outside 16-30 °C, raises an error and the unit does not beep.
+
+`quiet` and `turbo` are fan modes, available on units that report them. Picking one clears the other, and picking a fixed step clears both. The separate Quiet and Turbo switches are deprecated, disabled by default on new installs, raise a repair issue while enabled and will be removed in a later release.
+
 ## Options
 
 After setup, click **Configure** on the device card to change:

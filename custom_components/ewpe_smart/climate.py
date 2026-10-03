@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import voluptuous as vol
 from homeassistant.components.climate import (
     ATTR_HVAC_MODE,
     FAN_AUTO,
@@ -16,7 +17,9 @@ from homeassistant.components.climate import (
 )
 from homeassistant.const import ATTR_TEMPERATURE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
@@ -37,10 +40,13 @@ from .const import (
     PARAM_FAN_SPEED,
     PARAM_MODE,
     PARAM_POWER,
+    PARAM_QUIET,
     PARAM_SET_TEMP,
     PARAM_TEMP_SENSOR,
+    PARAM_TUR,
     POWER_OFF,
     POWER_ON,
+    QUIET_MODE_ON,
 )
 from .coordinator import EwpeConfigEntry, EwpeCoordinator
 from .device import EwpeError
@@ -72,6 +78,29 @@ FAN_MODE_TO_DEVICE: dict[str, int] = {
 }
 DEVICE_TO_FAN_MODE: dict[int, str] = {v: k for k, v in FAN_MODE_TO_DEVICE.items()}
 
+# Quiet and turbo are fan modes in the EWPE Smart app: picking either replaces
+# the other, and picking a fixed step clears both. They only exist as modes on
+# units that report the matching wire key.
+FAN_QUIET = "quiet"
+FAN_TURBO = "turbo"
+
+
+SERVICE_SET_STATE = "set_state"
+ATTR_FAN_MODE = "fan_mode"
+
+# The unit beeps once per command, so this service writes any combination of
+# mode, target and fan mode in a single packet.
+SET_STATE_SCHEMA = vol.All(
+    cv.has_at_least_one_key(ATTR_HVAC_MODE, ATTR_TEMPERATURE, ATTR_FAN_MODE),
+    cv.make_entity_service_schema(
+        {
+            vol.Optional(ATTR_HVAC_MODE): vol.Coerce(HVACMode),
+            vol.Optional(ATTR_TEMPERATURE): vol.Coerce(float),
+            vol.Optional(ATTR_FAN_MODE): cv.string,
+        }
+    ),
+)
+
 
 def _hvac_mode_params(hvac_mode: HVACMode) -> dict[str, int]:
     if hvac_mode == HVACMode.OFF:
@@ -89,6 +118,10 @@ async def async_setup_entry(
 ) -> None:
     """Register the climate entity for this config entry."""
     async_add_entities([EwpeClimateEntity(entry.runtime_data)])
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_SET_STATE, SET_STATE_SCHEMA, "async_set_state"
+    )
 
 
 class EwpeClimateEntity(EwpeEntity, ClimateEntity):
@@ -108,7 +141,6 @@ class EwpeClimateEntity(EwpeEntity, ClimateEntity):
         HVACMode.DRY,
         HVACMode.FAN_ONLY,
     ]
-    _attr_fan_modes = list(FAN_MODE_TO_DEVICE)
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE
         | ClimateEntityFeature.FAN_MODE
@@ -133,7 +165,20 @@ class EwpeClimateEntity(EwpeEntity, ClimateEntity):
         return DEVICE_TO_HVAC_MODE.get(mode)
 
     @property
+    def fan_modes(self) -> list[str]:
+        modes = list(FAN_MODE_TO_DEVICE)
+        if PARAM_QUIET in self._data:
+            modes.insert(1, FAN_QUIET)
+        if PARAM_TUR in self._data:
+            modes.append(FAN_TURBO)
+        return modes
+
+    @property
     def fan_mode(self) -> str | None:
+        if self._data.get(PARAM_TUR):
+            return FAN_TURBO
+        if self._data.get(PARAM_QUIET):
+            return FAN_QUIET
         speed = self._data.get(PARAM_FAN_SPEED)
         if speed is None:
             return None
@@ -157,10 +202,19 @@ class EwpeClimateEntity(EwpeEntity, ClimateEntity):
         await self._send(_hvac_mode_params(hvac_mode))
 
     async def async_set_fan_mode(self, fan_mode: str) -> None:
-        device_speed = FAN_MODE_TO_DEVICE.get(fan_mode)
-        if device_speed is None:
+        if fan_mode not in self.fan_modes:
             raise ValueError(f"Unsupported fan_mode: {fan_mode}")
-        await self._send({PARAM_FAN_SPEED: device_speed})
+        await self._send(self._fan_mode_params(fan_mode))
+
+    def _fan_mode_params(self, fan_mode: str) -> dict[str, int]:
+        params: dict[str, int] = {}
+        if fan_mode in FAN_MODE_TO_DEVICE:
+            params[PARAM_FAN_SPEED] = FAN_MODE_TO_DEVICE[fan_mode]
+        if PARAM_QUIET in self._data:
+            params[PARAM_QUIET] = QUIET_MODE_ON if fan_mode == FAN_QUIET else POWER_OFF
+        if PARAM_TUR in self._data:
+            params[PARAM_TUR] = POWER_ON if fan_mode == FAN_TURBO else POWER_OFF
+        return params
 
     async def async_set_temperature(self, **kwargs: Any) -> None:
         # climate.set_temperature may carry hvac_mode; send both in one packet
@@ -173,6 +227,35 @@ class EwpeClimateEntity(EwpeEntity, ClimateEntity):
             params[PARAM_SET_TEMP] = int(round(float(temperature)))
         if params:
             await self._send(params)
+
+    async def async_set_state(self, **kwargs: Any) -> None:
+        """Write every given setting in one packet."""
+        params: dict[str, int] = {}
+        if (hvac_mode := kwargs.get(ATTR_HVAC_MODE)) is not None:
+            if hvac_mode not in self.hvac_modes:
+                raise self._invalid("unsupported_hvac_mode", hvac_mode=hvac_mode)
+            params.update(_hvac_mode_params(hvac_mode))
+        if (temperature := kwargs.get(ATTR_TEMPERATURE)) is not None:
+            if not self.min_temp <= temperature <= self.max_temp:
+                raise self._invalid(
+                    "temperature_out_of_range",
+                    temperature=str(temperature),
+                    min_temp=str(self.min_temp),
+                    max_temp=str(self.max_temp),
+                )
+            params[PARAM_SET_TEMP] = int(round(temperature))
+        if (fan_mode := kwargs.get(ATTR_FAN_MODE)) is not None:
+            if fan_mode not in self.fan_modes:
+                raise self._invalid("unsupported_fan_mode", fan_mode=fan_mode)
+            params.update(self._fan_mode_params(fan_mode))
+        await self._send(params)
+
+    def _invalid(self, key: str, **placeholders: str) -> ServiceValidationError:
+        return ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key=key,
+            translation_placeholders=placeholders,
+        )
 
     async def async_turn_on(self) -> None:
         await self._send({PARAM_POWER: POWER_ON})

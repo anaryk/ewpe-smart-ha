@@ -76,7 +76,9 @@
               "medium_low": "Medellåg",
               "medium": "Medel",
               "medium_high": "Medelhög",
-              "high": "Hög"
+              "high": "Hög",
+              "quiet": "Tyst",
+              "turbo": "Turbo"
             }
           }
         }
@@ -548,9 +550,86 @@
       }
     }
   },
+  "issues": {
+    "deprecated_quiet_switch": {
+      "title": "{entity_id} är föråldrad",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Inaktivera {entity_id}?",
+            "description": "{entity_id} tas bort i en senare version. Tyst är numera ett fläktläge på klimatentiteten. Använd det (eller fältet fan_mode i ewpe_smart.set_state) i dina automationer och på dina dashboards.\n\nInaktivera {entity_id} nu? Du kan aktivera den igen i entitetsinställningarna tills den tas bort."
+          }
+        }
+      }
+    },
+    "deprecated_turbo_switch": {
+      "title": "{entity_id} är föråldrad",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Inaktivera {entity_id}?",
+            "description": "{entity_id} tas bort i en senare version. Turbo är numera ett fläktläge på klimatentiteten. Använd det (eller fältet fan_mode i ewpe_smart.set_state) i dina automationer och på dina dashboards.\n\nInaktivera {entity_id} nu? Du kan aktivera den igen i entitetsinställningarna tills den tas bort."
+          }
+        }
+      }
+    }
+  },
   "exceptions": {
     "command_failed": {
       "message": "Det gick inte att skicka kommandot till enheten: {error}"
+    },
+    "unsupported_hvac_mode": {
+      "message": "Driftläget {hvac_mode} stöds inte."
+    },
+    "temperature_out_of_range": {
+      "message": "Temperaturen {temperature} ligger utanför {min_temp}–{max_temp} °C."
+    },
+    "unsupported_fan_mode": {
+      "message": "Fläktläget {fan_mode} stöds inte."
+    }
+  },
+  "services": {
+    "set_state": {
+      "name": "Ställ in tillstånd",
+      "description": "Ställer in driftläge, måltemperatur och fläktläge (inklusive tyst och turbo) i ett kommando, så att enheten piper en gång.",
+      "fields": {
+        "hvac_mode": {
+          "name": "Driftläge",
+          "description": "Driftläge. Av stänger av enheten."
+        },
+        "temperature": {
+          "name": "Temperatur",
+          "description": "Måltemperatur."
+        },
+        "fan_mode": {
+          "name": "Fläktläge",
+          "description": "Fläktsteg."
+        }
+      }
+    }
+  },
+  "selector": {
+    "hvac_mode": {
+      "options": {
+        "off": "Av",
+        "auto": "Auto",
+        "cool": "Kyla",
+        "heat": "Värme",
+        "dry": "Avfuktning",
+        "fan_only": "Endast fläkt"
+      }
+    },
+    "fan_mode": {
+      "options": {
+        "auto": "Auto",
+        "low": "Låg",
+        "medium_low": "Medellåg",
+        "medium": "Medel",
+        "medium_high": "Medelhög",
+        "high": "Hög",
+        "quiet": "Tyst",
+        "turbo": "Turbo"
+      }
     }
   }
 }
