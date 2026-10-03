@@ -18,6 +18,7 @@ from .const import (
 )
 from .params_catalog import (
     ALL_KNOWN_PARAMS,
+    MIN_STATUS_BATCH_SIZE,
     TEMP_OFFSET_PARAMS,
     param_batches,
     poll_params,
@@ -208,10 +209,7 @@ class EwpeDevice:
         merged_status: dict[str, Any] = {}
         merged_cols: list[str] = []
         for batch in batches:
-            reply = await self._send_with_version_fallback(
-                {"t": "status", "mac": self.mac, "cols": list(batch)},
-            )
-            status, reply_cols = self._decode_status_reply(reply)
+            status, reply_cols = await self._get_status_batch(list(batch))
             merged_status.update(status)
             merged_cols.extend(reply_cols)
         if cols == list(ALL_KNOWN_PARAMS):
@@ -223,6 +221,36 @@ class EwpeDevice:
                 len(ALL_KNOWN_PARAMS),
             )
         return merged_status
+
+    async def _get_status_batch(
+        self, cols: list[str]
+    ) -> tuple[dict[str, Any], list[str]]:
+        """Request one batch of ``cols``, splitting it if the device stays silent.
+
+        Some firmware silently ignores a status request whose ``cols`` list is
+        longer than it can handle, so a timeout on a large batch usually means
+        "too many columns" rather than "device offline". Retry the two halves;
+        only give up once the batch is already small.
+        """
+        try:
+            reply = await self._send_with_version_fallback(
+                {"t": "status", "mac": self.mac, "cols": cols},
+            )
+        except EwpeTimeout:
+            if len(cols) < 2 * MIN_STATUS_BATCH_SIZE:
+                raise
+            half = len(cols) // 2
+            _LOGGER.debug(
+                "Status request with %d cols timed out on %s, retrying as %d + %d",
+                len(cols),
+                self.host,
+                half,
+                len(cols) - half,
+            )
+            first_status, first_cols = await self._get_status_batch(cols[:half])
+            second_status, second_cols = await self._get_status_batch(cols[half:])
+            return {**first_status, **second_status}, first_cols + second_cols
+        return self._decode_status_reply(reply)
 
     async def set_state(self, params: dict[str, int]) -> dict[str, int]:
         """Apply ``params`` (key → numeric value) to the device."""

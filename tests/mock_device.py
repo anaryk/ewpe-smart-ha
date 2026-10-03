@@ -36,6 +36,7 @@ class MockEwpeProtocol(asyncio.DatagramProtocol):
         status: dict[str, int] | None = None,
         misbehave: str | None = None,
         protocol_version: int = PROTO_V1,
+        max_status_cols: int | None = None,
     ) -> None:
         self.mac = mac
         self.name = name
@@ -50,6 +51,9 @@ class MockEwpeProtocol(asyncio.DatagramProtocol):
         }
         self.misbehave = misbehave
         self.protocol_version = protocol_version
+        # Real firmware silently drops status requests with too many cols.
+        self.max_status_cols = max_status_cols
+        self.status_requests: list[list[str]] = []
         self.received_commands: list[dict[str, Any]] = []
         self.transport: asyncio.DatagramTransport | None = None
 
@@ -136,6 +140,12 @@ class MockEwpeProtocol(asyncio.DatagramProtocol):
             }
         if t == "status":
             requested = inner.get("cols") or list(self.status.keys())
+            self.status_requests.append(list(requested))
+            if (
+                self.max_status_cols is not None
+                and len(requested) > self.max_status_cols
+            ):
+                return None
             cols = [c for c in requested if c in self.status]
             return {
                 "t": "dat",

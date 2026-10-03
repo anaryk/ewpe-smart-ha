@@ -33,8 +33,20 @@ def _load_known_params() -> tuple[str, ...]:
 # device payload (140 distinct keys on reference hardware).
 ALL_KNOWN_PARAMS: tuple[str, ...] = _load_known_params()
 
-# Some firmware (e.g. V3.4.M on V2 crypto) stops replying when ``cols`` exceeds ~57.
-DISCOVERY_BATCH_SIZE = 50
+# Firmware silently drops status requests whose ``cols`` list is too long. The
+# limit varies per module: V3.4.M on V2 crypto stops replying above ~57 cols,
+# while other Gree V2 modules already give up somewhere between 31 and 39 cols
+# (they answer every column on its own and any batch of <= 30, but no batch of
+# 40 or 50). Stay well below the lowest limit seen so far; get_status() also
+# splits a batch that still times out, so smaller limits keep working.
+DISCOVERY_BATCH_SIZE = 25
+
+# get_status() stops splitting an unanswered batch below this size and reports
+# the timeout, so an unreachable device doesn't cause a long cascade of retries.
+# With batches of 25 that is two levels (25, 12): an offline device costs two
+# timeouts per protocol version per poll, and the smallest batch still tried
+# (12) is well below the lowest limit measured on real firmware.
+MIN_STATUS_BATCH_SIZE = 8
 
 
 def param_batches(
