@@ -13,3 +13,4 @@ env/
 .idea/
 .vscode/
 .DS_Store
+tools/probe_device.local.sh
