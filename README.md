@@ -29,7 +29,7 @@ talks to the unit over UDP/7000 directly — no MQTT broker, no extra processes.
   device card in HA
 - 🔒 **Encrypted communication** — uses the EWPE Smart AES-128 protocol
 - ⚙️ **Configurable polling interval** (10–300 seconds, default 30)
-- 🌐 **Czech and English UI translations**
+- 🌐 **Czech, English and Swedish UI translations**
 - ✅ **Fully local** — no cloud, no third-party services
 
 ## Requirements
@@ -77,7 +77,8 @@ talks to the unit over UDP/7000 directly — no MQTT broker, no extra processes.
              ├── strings.json
              └── translations/
                  ├── cs.json
-                 └── en.json
+                 ├── en.json
+                 └── sv.json
    ```
 4. Restart Home Assistant.
 

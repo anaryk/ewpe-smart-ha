@@ -213,19 +213,19 @@
         "name": "Unique code"
       },
       "vocctl": {
-        "name": "Voice control"
+        "name": "VOC control"
       },
       "vocidiom": {
-        "name": "Voice idiom"
+        "name": "VOC idiom"
       },
       "vocrole": {
-        "name": "Voice role"
+        "name": "VOC role"
       },
       "vocupdatecol": {
-        "name": "Voice update column"
+        "name": "VOC update column"
       },
       "vocversta": {
-        "name": "Voice version status"
+        "name": "VOC version status"
       },
       "wind": {
         "name": "Wind feel"
