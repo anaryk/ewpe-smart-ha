@@ -89,6 +89,11 @@ def test_quiet_and_turbo_are_fan_modes() -> None:
     assert entity.fan_mode == "turbo"
 
 
+def test_quiet_wins_when_both_are_set() -> None:
+    entity, _ = _make_entity({"Pow": 1, "WdSpd": 3, "Quiet": 2, "Tur": 1})
+    assert entity.fan_mode == "quiet"
+
+
 @pytest.mark.asyncio
 async def test_set_quiet_fan_mode_writes_one_packet() -> None:
     entity, device = _make_entity({"Pow": 1, "WdSpd": 3, "Quiet": 0, "Tur": 1})
