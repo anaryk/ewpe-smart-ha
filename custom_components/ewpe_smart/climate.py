@@ -175,10 +175,11 @@ class EwpeClimateEntity(EwpeEntity, ClimateEntity):
 
     @property
     def fan_mode(self) -> str | None:
-        if self._data.get(PARAM_TUR):
-            return FAN_TURBO
+        # With both keys set the unit runs quiet and ignores turbo.
         if self._data.get(PARAM_QUIET):
             return FAN_QUIET
+        if self._data.get(PARAM_TUR):
+            return FAN_TURBO
         speed = self._data.get(PARAM_FAN_SPEED)
         if speed is None:
             return None
