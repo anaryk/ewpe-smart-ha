@@ -76,7 +76,9 @@
               "medium_low": "Středně nízká",
               "medium": "Střední",
               "medium_high": "Středně vysoká",
-              "high": "Vysoká"
+              "high": "Vysoká",
+              "quiet": "Tichý",
+              "turbo": "Turbo"
             }
           }
         }
@@ -182,9 +184,86 @@
       }
     }
   },
+  "issues": {
+    "deprecated_quiet_switch": {
+      "title": "{entity_id} je zastaralý",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Vypnout {entity_id}?",
+            "description": "{entity_id} bude v některém z dalších vydání odstraněn. Tichý režim je nově režim ventilátoru u entity klimatizace. V automatizacích a na dashboardech používejte ten (nebo pole fan_mode u ewpe_smart.set_state).\n\nVypnout {entity_id} teď? Do odstranění ho můžete znovu zapnout v nastavení entity."
+          }
+        }
+      }
+    },
+    "deprecated_turbo_switch": {
+      "title": "{entity_id} je zastaralý",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Vypnout {entity_id}?",
+            "description": "{entity_id} bude v některém z dalších vydání odstraněn. Turbo je nově režim ventilátoru u entity klimatizace. V automatizacích a na dashboardech používejte ten (nebo pole fan_mode u ewpe_smart.set_state).\n\nVypnout {entity_id} teď? Do odstranění ho můžete znovu zapnout v nastavení entity."
+          }
+        }
+      }
+    }
+  },
   "exceptions": {
     "command_failed": {
       "message": "Příkaz se nepodařilo odeslat do zařízení: {error}"
+    },
+    "unsupported_hvac_mode": {
+      "message": "Režim HVAC {hvac_mode} není podporován."
+    },
+    "temperature_out_of_range": {
+      "message": "Teplota {temperature} je mimo rozsah {min_temp}-{max_temp} °C."
+    },
+    "unsupported_fan_mode": {
+      "message": "Režim ventilátoru {fan_mode} není podporován."
+    }
+  },
+  "services": {
+    "set_state": {
+      "name": "Nastavit stav",
+      "description": "Nastaví režim, cílovou teplotu a režim ventilátoru (včetně tichého a turbo) jedním příkazem, takže jednotka pípne jen jednou.",
+      "fields": {
+        "hvac_mode": {
+          "name": "Režim HVAC",
+          "description": "Provozní režim. Vypnuto jednotku vypne."
+        },
+        "temperature": {
+          "name": "Teplota",
+          "description": "Cílová teplota."
+        },
+        "fan_mode": {
+          "name": "Režim ventilátoru",
+          "description": "Stupeň ventilátoru."
+        }
+      }
+    }
+  },
+  "selector": {
+    "hvac_mode": {
+      "options": {
+        "off": "Vypnuto",
+        "auto": "Automaticky",
+        "cool": "Chlazení",
+        "heat": "Topení",
+        "dry": "Odvlhčování",
+        "fan_only": "Pouze ventilátor"
+      }
+    },
+    "fan_mode": {
+      "options": {
+        "auto": "Automaticky",
+        "low": "Nízká",
+        "medium_low": "Středně nízká",
+        "medium": "Střední",
+        "medium_high": "Středně vysoká",
+        "high": "Vysoká",
+        "quiet": "Tichý",
+        "turbo": "Turbo"
+      }
     }
   }
 }

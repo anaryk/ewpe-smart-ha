@@ -78,6 +78,24 @@ def test_fan_modes_map_correctly(speed: int, expected: str) -> None:
     assert entity.fan_mode == expected
 
 
+def test_quiet_and_turbo_are_fan_modes() -> None:
+    entity, _ = _make_entity({"Pow": 1, "WdSpd": 3, "Quiet": 2, "Tur": 0})
+    assert entity.fan_modes[:2] == ["auto", "quiet"]
+    assert entity.fan_modes[-1] == "turbo"
+    entity_no_turbo, _ = _make_entity({"Pow": 1, "WdSpd": 3, "Quiet": 0})
+    assert "turbo" not in entity_no_turbo.fan_modes
+    assert entity.fan_mode == "quiet"
+    entity, _ = _make_entity({"Pow": 1, "WdSpd": 3, "Quiet": 0, "Tur": 1})
+    assert entity.fan_mode == "turbo"
+
+
+@pytest.mark.asyncio
+async def test_set_quiet_fan_mode_writes_one_packet() -> None:
+    entity, device = _make_entity({"Pow": 1, "WdSpd": 3, "Quiet": 0, "Tur": 1})
+    await entity.async_set_fan_mode("quiet")
+    device.set_state.assert_awaited_once_with({"Quiet": 2, "Tur": 0})
+
+
 def test_target_and_current_temperature() -> None:
     entity, _ = _make_entity({"Pow": 1, "Mod": 1, "SetTem": 23, "TemSen": 25})
     assert entity.target_temperature == 23.0

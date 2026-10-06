@@ -1,0 +1,18 @@
+{
+  "entity": {
+    "climate": {
+      "ewpe": {
+        "state_attributes": {
+          "fan_mode": {
+            "state": {
+              "quiet": "mdi:volume-mute",
+              "medium_low": "mdi:gauge-low",
+              "medium_high": "mdi:gauge",
+              "turbo": "mdi:rocket-launch"
+            }
+          }
+        }
+      }
+    }
+  }
+}

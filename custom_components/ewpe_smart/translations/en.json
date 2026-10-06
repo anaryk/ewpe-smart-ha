@@ -76,7 +76,9 @@
               "medium_low": "Medium low",
               "medium": "Medium",
               "medium_high": "Medium high",
-              "high": "High"
+              "high": "High",
+              "quiet": "Quiet",
+              "turbo": "Turbo"
             }
           }
         }
@@ -548,9 +550,86 @@
       }
     }
   },
+  "issues": {
+    "deprecated_quiet_switch": {
+      "title": "{entity_id} is deprecated",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Disable {entity_id}?",
+            "description": "{entity_id} will be removed in a later release. Quiet is now a fan mode on the climate entity. Use that (or the fan_mode field of ewpe_smart.set_state) in your automations and dashboards.\n\nDisable {entity_id} now? You can enable it again in the entity settings until it is removed."
+          }
+        }
+      }
+    },
+    "deprecated_turbo_switch": {
+      "title": "{entity_id} is deprecated",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Disable {entity_id}?",
+            "description": "{entity_id} will be removed in a later release. Turbo is now a fan mode on the climate entity. Use that (or the fan_mode field of ewpe_smart.set_state) in your automations and dashboards.\n\nDisable {entity_id} now? You can enable it again in the entity settings until it is removed."
+          }
+        }
+      }
+    }
+  },
   "exceptions": {
     "command_failed": {
       "message": "Failed to send the command to the device: {error}"
+    },
+    "unsupported_hvac_mode": {
+      "message": "HVAC mode {hvac_mode} is not supported."
+    },
+    "temperature_out_of_range": {
+      "message": "Temperature {temperature} is outside {min_temp}-{max_temp} °C."
+    },
+    "unsupported_fan_mode": {
+      "message": "Fan mode {fan_mode} is not supported."
+    }
+  },
+  "services": {
+    "set_state": {
+      "name": "Set state",
+      "description": "Sets mode, target temperature and fan mode (including quiet and turbo) in one command, so the unit beeps once.",
+      "fields": {
+        "hvac_mode": {
+          "name": "HVAC mode",
+          "description": "Operating mode. Off turns the unit off."
+        },
+        "temperature": {
+          "name": "Temperature",
+          "description": "Target temperature."
+        },
+        "fan_mode": {
+          "name": "Fan mode",
+          "description": "Fan step."
+        }
+      }
+    }
+  },
+  "selector": {
+    "hvac_mode": {
+      "options": {
+        "off": "Off",
+        "auto": "Auto",
+        "cool": "Cool",
+        "heat": "Heat",
+        "dry": "Dry",
+        "fan_only": "Fan only"
+      }
+    },
+    "fan_mode": {
+      "options": {
+        "auto": "Auto",
+        "low": "Low",
+        "medium_low": "Medium low",
+        "medium": "Medium",
+        "medium_high": "Medium high",
+        "high": "High",
+        "quiet": "Quiet",
+        "turbo": "Turbo"
+      }
     }
   }
 }
