@@ -15,7 +15,7 @@ permissions:
 jobs:
   hassfest:
     name: Hassfest (Home Assistant manifest validator)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, proxmox]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -25,7 +25,7 @@ jobs:
 
   hacs:
     name: HACS validation
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, proxmox]
     steps:
       - name: Checkout
         uses: actions/checkout@v7

@@ -13,7 +13,7 @@ permissions:
 jobs:
   ruff:
     name: Ruff
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, proxmox]
     steps:
       - name: Checkout
         uses: actions/checkout@v7

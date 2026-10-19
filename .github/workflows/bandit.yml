@@ -14,7 +14,7 @@ permissions:
 jobs:
   bandit:
     name: Bandit (Python security linter)
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, proxmox]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
