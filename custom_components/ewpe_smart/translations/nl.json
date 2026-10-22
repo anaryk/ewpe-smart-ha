@@ -1,0 +1,635 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "EWPE Smart",
+        "description": "Kies hoe je een EWPE Smart-apparaat wilt toevoegen",
+        "menu_options": {
+          "manual": "IP-adres handmatig invoeren",
+          "discover": "Lokaal netwerk scannen"
+        }
+      },
+      "manual": {
+        "title": "Apparaat toevoegen via IP",
+        "data": {
+          "host": "IP-adres",
+          "name": "Weergavenaam (optioneel)"
+        }
+      },
+      "discover": {
+        "title": "Netwerk scannen",
+        "data": {
+          "broadcast": "Broadcastadres"
+        }
+      },
+      "pick_device": {
+        "title": "Kies een apparaat",
+        "data": {
+          "host": "Apparaat"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Opnieuw authenticeren",
+        "description": "De sleutel van het apparaat is geweigerd. Heb je het apparaat onlangs gereset, schakel het dan uit en weer in. Klik daarna op Verzenden om opnieuw te koppelen."
+      },
+      "reconfigure": {
+        "title": "IP-adres wijzigen",
+        "description": "Voer het huidige IP-adres van het apparaat in. Bij het opslaan wordt de sleutel opnieuw opgehaald.",
+        "data": {
+          "host": "IP-adres"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan het apparaat op het opgegeven IP-adres niet bereiken",
+      "device_refused": "Het apparaat weigerde de verbinding op UDP 7000. Het is bereikbaar, maar er luistert niets op die poort, waarschijnlijk omdat lokale bediening in de wifimodule uitgeschakeld is. Zie het onderdeel over probleemoplossing in de README.",
+      "invalid_response": "Het apparaat antwoordde met onverwachte gegevens",
+      "no_devices": "Geen apparaten gevonden op het netwerk",
+      "scan_failed": "Netwerkscan mislukt",
+      "unknown": "Onverwachte fout"
+    },
+    "abort": {
+      "already_configured": "Apparaat is al geconfigureerd",
+      "reauth_successful": "Herauthenticatie geslaagd",
+      "reconfigure_successful": "IP-adres bijgewerkt",
+      "wrong_device": "Dat IP-adres hoort bij een ander apparaat"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "EWPE Smart-opties",
+        "data": {
+          "update_interval": "Update-interval (seconden)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "climate": {
+      "ewpe": {
+        "state_attributes": {
+          "fan_mode": {
+            "state": {
+              "auto": "Auto",
+              "low": "Laag",
+              "medium_low": "Middel-laag",
+              "medium": "Middel",
+              "medium_high": "Middel-hoog",
+              "high": "Hoog",
+              "quiet": "Stil",
+              "turbo": "Turbo"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "indoor_temperature": {
+        "name": "Binnentemperatuur"
+      },
+      "outdoor_temperature": {
+        "name": "Buitentemperatuur"
+      },
+      "drain_water_sensor": {
+        "name": "Condenswatersensor"
+      },
+      "humidity": {
+        "name": "Luchtvochtigheid / natte modus"
+      },
+      "heat_cool_type": {
+        "name": "Type verwarmen/koelen"
+      },
+      "fault": {
+        "name": "Foutcode"
+      },
+      "pm25": {
+        "name": "PM2.5"
+      },
+      "filter_status": {
+        "name": "Filterstatus"
+      },
+      "all_errors": {
+        "name": "Alle fouten"
+      },
+      "jf_error_code": {
+        "name": "JF-foutcode"
+      },
+      "subhealth_fault": {
+        "name": "Subhealth-fout"
+      },
+      "shutdown_fault": {
+        "name": "Uitschakelfout"
+      },
+      "forbidden_blow_period": {
+        "name": "Periode zonder blazen"
+      },
+      "environment_temperature": {
+        "name": "Omgevingstemperatuur"
+      },
+      "indoor_evaporator_temperature": {
+        "name": "Temperatuur verdamper binnenunit"
+      },
+      "compressor_temperature": {
+        "name": "Compressortemperatuur"
+      },
+      "compressor_temperature_alt": {
+        "name": "Compressortemperatuur (alt.)"
+      },
+      "compressor_frequency": {
+        "name": "Compressorfrequentie"
+      },
+      "outdoor_sensor_temperature": {
+        "name": "Temperatuur buitensensor"
+      },
+      "auto_clean_status": {
+        "name": "Status automatische reiniging"
+      },
+      "auto_clean_status_extended": {
+        "name": "Status automatische reiniging (uitgebreid)"
+      },
+      "power_reduce_type": {
+        "name": "Type vermogensbeperking"
+      },
+      "power_reduce_gear": {
+        "name": "Stand vermogensbeperking"
+      },
+      "add0_1": {
+        "name": "Temperatuurcorrectie 0,1"
+      },
+      "add0_5": {
+        "name": "Temperatuurcorrectie 0,5"
+      },
+      "apptimer": {
+        "name": "App-timer"
+      },
+      "assht": {
+        "name": "Bijverwarming"
+      },
+      "blktemcom": {
+        "name": "Blok-temperatuurcompensatie"
+      },
+      "coolmod": {
+        "name": "Variant koelmodus"
+      },
+      "dfpoint": {
+        "name": "Ontdooipunt"
+      },
+      "dmod": {
+        "name": "Variant droogmodus"
+      },
+      "dwatful": {
+        "name": "Condenswater vol"
+      },
+      "dwet": {
+        "name": "Status vochtafvoer"
+      },
+      "elcallkwhclr": {
+        "name": "kWh-teller wissen"
+      },
+      "elcen": {
+        "name": "Energiemeting ingeschakeld"
+      },
+      "envfun": {
+        "name": "Omgevingsfunctie"
+      },
+      "heatcool": {
+        "name": "Status verwarmen/koelen"
+      },
+      "imgupdatecol": {
+        "name": "Kolom image-update"
+      },
+      "imgversta": {
+        "name": "Status image-versie"
+      },
+      "modelnew": {
+        "name": "Nieuw model"
+      },
+      "modeltype": {
+        "name": "Modeltype"
+      },
+      "newtimer": {
+        "name": "Nieuwe timer"
+      },
+      "uniquecode": {
+        "name": "Unieke code"
+      },
+      "vocctl": {
+        "name": "VOC-regeling"
+      },
+      "vocidiom": {
+        "name": "VOC-idioom"
+      },
+      "vocrole": {
+        "name": "VOC-rol"
+      },
+      "vocupdatecol": {
+        "name": "VOC-updatekolom"
+      },
+      "vocversta": {
+        "name": "VOC-versiestatus"
+      },
+      "wind": {
+        "name": "Windgevoel"
+      },
+      "bc": {
+        "name": "Broadcastcode"
+      },
+      "busvol": {
+        "name": "Busspanning"
+      },
+      "header": {
+        "name": "Pakketheader"
+      },
+      "hid": {
+        "name": "Hardware-ID"
+      },
+      "host": {
+        "name": "Cloudhost"
+      },
+      "mac": {
+        "name": "MAC-adres"
+      },
+      "mid": {
+        "name": "Module-ID"
+      },
+      "name": {
+        "name": "Gemelde naam"
+      },
+      "vender": {
+        "name": "Fabrikant"
+      },
+      "ver": {
+        "name": "Firmwareversie"
+      },
+      "wifireset": {
+        "name": "Wifi-reset"
+      },
+      "wifistatus": {
+        "name": "Wifi-status"
+      },
+      "envarea1st": {
+        "name": "Omgeving zone 1"
+      },
+      "envarea2st": {
+        "name": "Omgeving zone 2"
+      },
+      "envarea3st": {
+        "name": "Omgeving zone 3"
+      },
+      "envarea4st": {
+        "name": "Omgeving zone 4"
+      },
+      "envarea5st": {
+        "name": "Omgeving zone 5"
+      },
+      "envarea6st": {
+        "name": "Omgeving zone 6"
+      },
+      "envarea7st": {
+        "name": "Omgeving zone 7"
+      },
+      "envarea8st": {
+        "name": "Omgeving zone 8"
+      },
+      "envarea9st": {
+        "name": "Omgeving zone 9"
+      },
+      "estateinsta21": {
+        "name": "Installatievlag 21"
+      },
+      "estateinsta22": {
+        "name": "Installatievlag 22"
+      },
+      "estateinsta23": {
+        "name": "Installatievlag 23"
+      },
+      "estateinsta24": {
+        "name": "Installatievlag 24"
+      }
+    },
+    "switch": {
+      "sleep": {
+        "name": "Slaapstand"
+      },
+      "turbo": {
+        "name": "Turbo"
+      },
+      "quiet": {
+        "name": "Stil"
+      },
+      "xfan": {
+        "name": "X-Fan"
+      },
+      "health": {
+        "name": "Health"
+      },
+      "display_light": {
+        "name": "Displayverlichting"
+      },
+      "energy_save": {
+        "name": "Energiebesparing"
+      },
+      "fresh_air": {
+        "name": "Verse lucht"
+      },
+      "smart_slp_mod": {
+        "name": "Slimme slaapmodus"
+      },
+      "slp_mod": {
+        "name": "Type slaapmodus"
+      },
+      "emod": {
+        "name": "Eco-modus"
+      },
+      "nobody_save": {
+        "name": "Besparen bij afwezigheid"
+      },
+      "anti_dazzle": {
+        "name": "Antiverblinding"
+      },
+      "led_light": {
+        "name": "Ledverlichting"
+      },
+      "led_light_zone": {
+        "name": "Ledverlichting (zone)"
+      },
+      "display_state_switch": {
+        "name": "Displaystatus"
+      },
+      "buzzer_ctrl": {
+        "name": "Pieper (BuzzerCtrl)"
+      },
+      "buzzer_on_off": {
+        "name": "Pieper (Buzzer_ON_OFF)"
+      },
+      "anti_direct_blow": {
+        "name": "Niet rechtstreeks blazen"
+      },
+      "light_sensor": {
+        "name": "Lichtsensor"
+      },
+      "smart_heat_8c": {
+        "name": "8 °C-verwarming"
+      },
+      "child_lock": {
+        "name": "Kinderslot"
+      },
+      "auto_clean": {
+        "name": "Automatische reiniging"
+      },
+      "uvc_control": {
+        "name": "UV-C-regeling"
+      },
+      "cool_feel": {
+        "name": "Koel gevoel"
+      },
+      "smart_wind": {
+        "name": "Slimme luchtstroom"
+      },
+      "auto_pow_reduce": {
+        "name": "Automatische vermogensbeperking"
+      },
+      "unoccupied_shutdown": {
+        "name": "Uitschakelen bij afwezigheid"
+      },
+      "timer_start": {
+        "name": "Timer starten"
+      },
+      "timer_stop": {
+        "name": "Timer stoppen"
+      }
+    },
+    "select": {
+      "swing_horizontal": {
+        "name": "Horizontale swing",
+        "state": {
+          "full_swing": "Volledige swing",
+          "left": "Links",
+          "left_center": "Links-midden",
+          "center": "Midden",
+          "right_center": "Rechts-midden",
+          "right": "Rechts"
+        }
+      },
+      "swing_vertical": {
+        "name": "Verticale swing",
+        "state": {
+          "full_swing": "Volledige swing",
+          "fixed_upper": "Vast boven",
+          "fixed_upper_middle": "Vast midden-boven",
+          "fixed_middle": "Vast midden",
+          "fixed_lower_middle": "Vast midden-onder",
+          "fixed_lower": "Vast onder",
+          "swing_upper": "Swing boven",
+          "swing_upper_middle": "Swing midden-boven",
+          "swing_middle": "Swing midden",
+          "swing_lower_middle": "Swing midden-onder",
+          "swing_lower": "Swing onder"
+        }
+      },
+      "sub_zone_swing_ud": {
+        "name": "Subzone-swing op/neer",
+        "state": {
+          "full_swing": "Volledige swing",
+          "fixed_upper": "Vast boven",
+          "fixed_upper_middle": "Vast midden-boven",
+          "fixed_middle": "Vast midden",
+          "fixed_lower_middle": "Vast midden-onder",
+          "fixed_lower": "Vast onder",
+          "swing_upper": "Swing boven",
+          "swing_upper_middle": "Swing midden-boven",
+          "swing_middle": "Swing midden",
+          "swing_lower_middle": "Swing midden-onder",
+          "swing_lower": "Swing onder"
+        }
+      },
+      "sub_zone_swing_right_lr": {
+        "name": "Subzone rechts: swing links/rechts",
+        "state": {
+          "full_swing": "Volledige swing",
+          "left": "Links",
+          "left_center": "Links-midden",
+          "center": "Midden",
+          "right_center": "Rechts-midden",
+          "right": "Rechts"
+        }
+      },
+      "sub_zone_swing_left_lr": {
+        "name": "Subzone links: swing links/rechts",
+        "state": {
+          "full_swing": "Volledige swing",
+          "left": "Links",
+          "left_center": "Links-midden",
+          "center": "Midden",
+          "right_center": "Rechts-midden",
+          "right": "Rechts"
+        }
+      }
+    },
+    "binary_sensor": {
+      "replace_hepa": {
+        "name": "HEPA-filter vervangen"
+      },
+      "has_timer": {
+        "name": "Timer ingesteld"
+      },
+      "motion": {
+        "name": "Beweging"
+      },
+      "drain_pump": {
+        "name": "Afvoerpomp"
+      }
+    },
+    "number": {
+      "timer_on_minutes_left": {
+        "name": "Aan-timer: resterende minuten"
+      },
+      "timer_off_minutes_left": {
+        "name": "Uit-timer: resterende minuten"
+      },
+      "timer_loop_times": {
+        "name": "Aantal timerherhalingen"
+      },
+      "unoccupied_off_time": {
+        "name": "Uitschakeltijd bij afwezigheid"
+      },
+      "sleep_curve_low_1": {
+        "name": "Slaapcurve laag, stap 1"
+      },
+      "sleep_curve_low_2": {
+        "name": "Slaapcurve laag, stap 2"
+      },
+      "sleep_curve_low_3": {
+        "name": "Slaapcurve laag, stap 3"
+      },
+      "sleep_curve_low_4": {
+        "name": "Slaapcurve laag, stap 4"
+      },
+      "sleep_curve_low_5": {
+        "name": "Slaapcurve laag, stap 5"
+      },
+      "sleep_curve_low_6": {
+        "name": "Slaapcurve laag, stap 6"
+      },
+      "sleep_curve_low_7": {
+        "name": "Slaapcurve laag, stap 7"
+      },
+      "sleep_curve_low_8": {
+        "name": "Slaapcurve laag, stap 8"
+      },
+      "sleep_curve_high_1": {
+        "name": "Slaapcurve hoog, stap 1"
+      },
+      "sleep_curve_high_2": {
+        "name": "Slaapcurve hoog, stap 2"
+      },
+      "sleep_curve_high_3": {
+        "name": "Slaapcurve hoog, stap 3"
+      },
+      "sleep_curve_high_4": {
+        "name": "Slaapcurve hoog, stap 4"
+      },
+      "sleep_curve_high_5": {
+        "name": "Slaapcurve hoog, stap 5"
+      },
+      "sleep_curve_high_6": {
+        "name": "Slaapcurve hoog, stap 6"
+      },
+      "sleep_curve_high_7": {
+        "name": "Slaapcurve hoog, stap 7"
+      },
+      "sleep_curve_high_8": {
+        "name": "Slaapcurve hoog, stap 8"
+      },
+      "temperature_display_offset": {
+        "name": "Correctie temperatuurweergave"
+      },
+      "up_down_fan_port": {
+        "name": "Ventilatorpoort op/neer"
+      }
+    }
+  },
+  "issues": {
+    "deprecated_quiet_switch": {
+      "title": "{entity_id} is verouderd",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "{entity_id} uitschakelen?",
+            "description": "{entity_id} wordt in een volgende versie verwijderd. Stil is nu een ventilatormodus van de klimaatentiteit. Gebruik die (of het veld fan_mode van ewpe_smart.set_state) in je automatiseringen en dashboards.\n\n{entity_id} nu uitschakelen? Tot de entiteit verwijderd wordt, kun je ze weer inschakelen in de entiteitsinstellingen."
+          }
+        }
+      }
+    },
+    "deprecated_turbo_switch": {
+      "title": "{entity_id} is verouderd",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "{entity_id} uitschakelen?",
+            "description": "{entity_id} wordt in een volgende versie verwijderd. Turbo is nu een ventilatormodus van de klimaatentiteit. Gebruik die (of het veld fan_mode van ewpe_smart.set_state) in je automatiseringen en dashboards.\n\n{entity_id} nu uitschakelen? Tot de entiteit verwijderd wordt, kun je ze weer inschakelen in de entiteitsinstellingen."
+          }
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "Kan het commando niet naar het apparaat sturen: {error}"
+    },
+    "unsupported_hvac_mode": {
+      "message": "HVAC-modus {hvac_mode} wordt niet ondersteund."
+    },
+    "temperature_out_of_range": {
+      "message": "Temperatuur {temperature} ligt buiten {min_temp}-{max_temp} °C."
+    },
+    "unsupported_fan_mode": {
+      "message": "Ventilatormodus {fan_mode} wordt niet ondersteund."
+    }
+  },
+  "services": {
+    "set_state": {
+      "name": "Status instellen",
+      "description": "Stelt modus, doeltemperatuur en ventilatormodus (inclusief stil en turbo) in met één commando, zodat het apparaat maar één keer piept.",
+      "fields": {
+        "hvac_mode": {
+          "name": "HVAC-modus",
+          "description": "Werkingsmodus. Uit schakelt het apparaat uit."
+        },
+        "temperature": {
+          "name": "Temperatuur",
+          "description": "Doeltemperatuur."
+        },
+        "fan_mode": {
+          "name": "Ventilatormodus",
+          "description": "Ventilatorstand."
+        }
+      }
+    }
+  },
+  "selector": {
+    "hvac_mode": {
+      "options": {
+        "off": "Uit",
+        "auto": "Auto",
+        "cool": "Koelen",
+        "heat": "Verwarmen",
+        "dry": "Drogen",
+        "fan_only": "Alleen ventilator"
+      }
+    },
+    "fan_mode": {
+      "options": {
+        "auto": "Auto",
+        "low": "Laag",
+        "medium_low": "Middel-laag",
+        "medium": "Middel",
+        "medium_high": "Middel-hoog",
+        "high": "Hoog",
+        "quiet": "Stil",
+        "turbo": "Turbo"
+      }
+    }
+  }
+}
