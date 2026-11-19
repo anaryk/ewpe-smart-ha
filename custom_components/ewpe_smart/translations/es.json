@@ -1,0 +1,635 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "EWPE Smart",
+        "description": "Elige cómo añadir un dispositivo EWPE Smart",
+        "menu_options": {
+          "manual": "Introducir la dirección IP manualmente",
+          "discover": "Buscar en la red local"
+        }
+      },
+      "manual": {
+        "title": "Añadir dispositivo por IP",
+        "data": {
+          "host": "Dirección IP",
+          "name": "Nombre descriptivo (opcional)"
+        }
+      },
+      "discover": {
+        "title": "Buscar en la red",
+        "data": {
+          "broadcast": "Dirección de difusión"
+        }
+      },
+      "pick_device": {
+        "title": "Elige un dispositivo",
+        "data": {
+          "host": "Dispositivo"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Volver a autenticar",
+        "description": "Se ha rechazado la clave del dispositivo. Si has restablecido la unidad hace poco, apágala y vuelve a encenderla; después haz clic en Enviar para volver a vincularla."
+      },
+      "reconfigure": {
+        "title": "Cambiar la dirección IP",
+        "description": "Introduce la dirección IP actual del dispositivo. La clave se vuelve a obtener al guardar.",
+        "data": {
+          "host": "Dirección IP"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "No se ha podido contactar con el dispositivo en la IP indicada",
+      "device_refused": "El dispositivo ha rechazado la conexión en UDP 7000. Es accesible, pero no hay nada escuchando en ese puerto, probablemente porque el control local está desactivado en su módulo wifi. Consulta la sección de solución de problemas del README.",
+      "invalid_response": "El dispositivo ha respondido con datos inesperados",
+      "no_devices": "No se ha encontrado ningún dispositivo en la red",
+      "scan_failed": "No se ha podido buscar en la red",
+      "unknown": "Error inesperado"
+    },
+    "abort": {
+      "already_configured": "Este dispositivo ya está configurado",
+      "reauth_successful": "La reautenticación se ha realizado correctamente",
+      "reconfigure_successful": "Dirección IP actualizada",
+      "wrong_device": "Esa IP pertenece a otro dispositivo"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opciones de EWPE Smart",
+        "data": {
+          "update_interval": "Intervalo de sondeo (segundos)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "climate": {
+      "ewpe": {
+        "state_attributes": {
+          "fan_mode": {
+            "state": {
+              "auto": "Automático",
+              "low": "Bajo",
+              "medium_low": "Medio-bajo",
+              "medium": "Medio",
+              "medium_high": "Medio-alto",
+              "high": "Alto",
+              "quiet": "Silencioso",
+              "turbo": "Turbo"
+            }
+          }
+        }
+      }
+    },
+    "sensor": {
+      "indoor_temperature": {
+        "name": "Temperatura interior"
+      },
+      "outdoor_temperature": {
+        "name": "Temperatura exterior"
+      },
+      "drain_water_sensor": {
+        "name": "Sensor de agua de drenaje"
+      },
+      "humidity": {
+        "name": "Humedad / modo húmedo"
+      },
+      "heat_cool_type": {
+        "name": "Tipo de frío/calor"
+      },
+      "fault": {
+        "name": "Código de avería"
+      },
+      "pm25": {
+        "name": "PM2.5"
+      },
+      "filter_status": {
+        "name": "Estado del filtro"
+      },
+      "all_errors": {
+        "name": "Todos los errores"
+      },
+      "jf_error_code": {
+        "name": "Código de error JF"
+      },
+      "subhealth_fault": {
+        "name": "Avería leve"
+      },
+      "shutdown_fault": {
+        "name": "Avería con parada"
+      },
+      "forbidden_blow_period": {
+        "name": "Periodo de soplado bloqueado"
+      },
+      "environment_temperature": {
+        "name": "Temperatura ambiente"
+      },
+      "indoor_evaporator_temperature": {
+        "name": "Temperatura del evaporador interior"
+      },
+      "compressor_temperature": {
+        "name": "Temperatura del compresor"
+      },
+      "compressor_temperature_alt": {
+        "name": "Temperatura del compresor (alt.)"
+      },
+      "compressor_frequency": {
+        "name": "Frecuencia del compresor"
+      },
+      "outdoor_sensor_temperature": {
+        "name": "Temperatura del sensor exterior"
+      },
+      "auto_clean_status": {
+        "name": "Estado de la autolimpieza"
+      },
+      "auto_clean_status_extended": {
+        "name": "Estado de la autolimpieza (ampliado)"
+      },
+      "power_reduce_type": {
+        "name": "Tipo de reducción de potencia"
+      },
+      "power_reduce_gear": {
+        "name": "Nivel de reducción de potencia"
+      },
+      "add0_1": {
+        "name": "Compensación de temperatura 0,1"
+      },
+      "add0_5": {
+        "name": "Compensación de temperatura 0,5"
+      },
+      "apptimer": {
+        "name": "Temporizador de la app"
+      },
+      "assht": {
+        "name": "Calefacción auxiliar"
+      },
+      "blktemcom": {
+        "name": "Bloqueo de compensación de temperatura"
+      },
+      "coolmod": {
+        "name": "Variante del modo frío"
+      },
+      "dfpoint": {
+        "name": "Punto de desescarche"
+      },
+      "dmod": {
+        "name": "Variante del modo seco"
+      },
+      "dwatful": {
+        "name": "Depósito de drenaje lleno"
+      },
+      "dwet": {
+        "name": "Estado de humedad del drenaje"
+      },
+      "elcallkwhclr": {
+        "name": "Borrado de kWh de electricidad"
+      },
+      "elcen": {
+        "name": "Medición eléctrica activada"
+      },
+      "envfun": {
+        "name": "Función de entorno"
+      },
+      "heatcool": {
+        "name": "Estado de frío/calor"
+      },
+      "imgupdatecol": {
+        "name": "Columna de actualización de imagen"
+      },
+      "imgversta": {
+        "name": "Estado de la versión de imagen"
+      },
+      "modelnew": {
+        "name": "Modelo nuevo"
+      },
+      "modeltype": {
+        "name": "Tipo de modelo"
+      },
+      "newtimer": {
+        "name": "Temporizador nuevo"
+      },
+      "uniquecode": {
+        "name": "Código único"
+      },
+      "vocctl": {
+        "name": "Control de VOC"
+      },
+      "vocidiom": {
+        "name": "Idioma de VOC"
+      },
+      "vocrole": {
+        "name": "Rol de VOC"
+      },
+      "vocupdatecol": {
+        "name": "Columna de actualización de VOC"
+      },
+      "vocversta": {
+        "name": "Estado de la versión de VOC"
+      },
+      "wind": {
+        "name": "Sensación de aire"
+      },
+      "bc": {
+        "name": "Código de difusión"
+      },
+      "busvol": {
+        "name": "Tensión del bus"
+      },
+      "header": {
+        "name": "Cabecera del paquete"
+      },
+      "hid": {
+        "name": "ID de hardware"
+      },
+      "host": {
+        "name": "Servidor en la nube"
+      },
+      "mac": {
+        "name": "Dirección MAC"
+      },
+      "mid": {
+        "name": "ID del módulo"
+      },
+      "name": {
+        "name": "Nombre notificado"
+      },
+      "vender": {
+        "name": "Fabricante"
+      },
+      "ver": {
+        "name": "Versión del firmware"
+      },
+      "wifireset": {
+        "name": "Restablecimiento de Wi-Fi"
+      },
+      "wifistatus": {
+        "name": "Estado de Wi-Fi"
+      },
+      "envarea1st": {
+        "name": "Entorno de la zona 1"
+      },
+      "envarea2st": {
+        "name": "Entorno de la zona 2"
+      },
+      "envarea3st": {
+        "name": "Entorno de la zona 3"
+      },
+      "envarea4st": {
+        "name": "Entorno de la zona 4"
+      },
+      "envarea5st": {
+        "name": "Entorno de la zona 5"
+      },
+      "envarea6st": {
+        "name": "Entorno de la zona 6"
+      },
+      "envarea7st": {
+        "name": "Entorno de la zona 7"
+      },
+      "envarea8st": {
+        "name": "Entorno de la zona 8"
+      },
+      "envarea9st": {
+        "name": "Entorno de la zona 9"
+      },
+      "estateinsta21": {
+        "name": "Indicador de instalación 21"
+      },
+      "estateinsta22": {
+        "name": "Indicador de instalación 22"
+      },
+      "estateinsta23": {
+        "name": "Indicador de instalación 23"
+      },
+      "estateinsta24": {
+        "name": "Indicador de instalación 24"
+      }
+    },
+    "switch": {
+      "sleep": {
+        "name": "Modo sueño"
+      },
+      "turbo": {
+        "name": "Turbo"
+      },
+      "quiet": {
+        "name": "Silencioso"
+      },
+      "xfan": {
+        "name": "X-Fan"
+      },
+      "health": {
+        "name": "Health"
+      },
+      "display_light": {
+        "name": "Luz de la pantalla"
+      },
+      "energy_save": {
+        "name": "Ahorro de energía"
+      },
+      "fresh_air": {
+        "name": "Aire fresco"
+      },
+      "smart_slp_mod": {
+        "name": "Modo sueño inteligente"
+      },
+      "slp_mod": {
+        "name": "Tipo de modo sueño"
+      },
+      "emod": {
+        "name": "Modo económico"
+      },
+      "nobody_save": {
+        "name": "Ahorro en ausencia"
+      },
+      "anti_dazzle": {
+        "name": "Antideslumbramiento"
+      },
+      "led_light": {
+        "name": "Luz LED"
+      },
+      "led_light_zone": {
+        "name": "Luz LED (zona)"
+      },
+      "display_state_switch": {
+        "name": "Estado de la pantalla"
+      },
+      "buzzer_ctrl": {
+        "name": "Pitido (BuzzerCtrl)"
+      },
+      "buzzer_on_off": {
+        "name": "Pitido (Buzzer_ON_OFF)"
+      },
+      "anti_direct_blow": {
+        "name": "Evitar aire directo"
+      },
+      "light_sensor": {
+        "name": "Sensor de luz"
+      },
+      "smart_heat_8c": {
+        "name": "Calefacción a 8 °C"
+      },
+      "child_lock": {
+        "name": "Bloqueo infantil"
+      },
+      "auto_clean": {
+        "name": "Autolimpieza"
+      },
+      "uvc_control": {
+        "name": "Control UV-C"
+      },
+      "cool_feel": {
+        "name": "Sensación de frescor"
+      },
+      "smart_wind": {
+        "name": "Aire inteligente"
+      },
+      "auto_pow_reduce": {
+        "name": "Reducción automática de potencia"
+      },
+      "unoccupied_shutdown": {
+        "name": "Apagado por ausencia"
+      },
+      "timer_start": {
+        "name": "Inicio del temporizador"
+      },
+      "timer_stop": {
+        "name": "Fin del temporizador"
+      }
+    },
+    "select": {
+      "swing_horizontal": {
+        "name": "Oscilación horizontal",
+        "state": {
+          "full_swing": "Oscilación completa",
+          "left": "Izquierda",
+          "left_center": "Centro izquierda",
+          "center": "Centro",
+          "right_center": "Centro derecha",
+          "right": "Derecha"
+        }
+      },
+      "swing_vertical": {
+        "name": "Oscilación vertical",
+        "state": {
+          "full_swing": "Oscilación completa",
+          "fixed_upper": "Fija arriba",
+          "fixed_upper_middle": "Fija arriba-centro",
+          "fixed_middle": "Fija centro",
+          "fixed_lower_middle": "Fija abajo-centro",
+          "fixed_lower": "Fija abajo",
+          "swing_upper": "Oscilación arriba",
+          "swing_upper_middle": "Oscilación arriba-centro",
+          "swing_middle": "Oscilación centro",
+          "swing_lower_middle": "Oscilación abajo-centro",
+          "swing_lower": "Oscilación abajo"
+        }
+      },
+      "sub_zone_swing_ud": {
+        "name": "Oscilación arriba/abajo de la subzona",
+        "state": {
+          "full_swing": "Oscilación completa",
+          "fixed_upper": "Fija arriba",
+          "fixed_upper_middle": "Fija arriba-centro",
+          "fixed_middle": "Fija centro",
+          "fixed_lower_middle": "Fija abajo-centro",
+          "fixed_lower": "Fija abajo",
+          "swing_upper": "Oscilación arriba",
+          "swing_upper_middle": "Oscilación arriba-centro",
+          "swing_middle": "Oscilación centro",
+          "swing_lower_middle": "Oscilación abajo-centro",
+          "swing_lower": "Oscilación abajo"
+        }
+      },
+      "sub_zone_swing_right_lr": {
+        "name": "Oscilación izquierda/derecha de la subzona derecha",
+        "state": {
+          "full_swing": "Oscilación completa",
+          "left": "Izquierda",
+          "left_center": "Centro izquierda",
+          "center": "Centro",
+          "right_center": "Centro derecha",
+          "right": "Derecha"
+        }
+      },
+      "sub_zone_swing_left_lr": {
+        "name": "Oscilación izquierda/derecha de la subzona izquierda",
+        "state": {
+          "full_swing": "Oscilación completa",
+          "left": "Izquierda",
+          "left_center": "Centro izquierda",
+          "center": "Centro",
+          "right_center": "Centro derecha",
+          "right": "Derecha"
+        }
+      }
+    },
+    "binary_sensor": {
+      "replace_hepa": {
+        "name": "Sustituir el filtro HEPA"
+      },
+      "has_timer": {
+        "name": "Temporizador programado"
+      },
+      "motion": {
+        "name": "Movimiento"
+      },
+      "drain_pump": {
+        "name": "Bomba de drenaje"
+      }
+    },
+    "number": {
+      "timer_on_minutes_left": {
+        "name": "Minutos restantes para el encendido"
+      },
+      "timer_off_minutes_left": {
+        "name": "Minutos restantes para el apagado"
+      },
+      "timer_loop_times": {
+        "name": "Repeticiones del temporizador"
+      },
+      "unoccupied_off_time": {
+        "name": "Tiempo de apagado por ausencia"
+      },
+      "sleep_curve_low_1": {
+        "name": "Curva de sueño baja, paso 1"
+      },
+      "sleep_curve_low_2": {
+        "name": "Curva de sueño baja, paso 2"
+      },
+      "sleep_curve_low_3": {
+        "name": "Curva de sueño baja, paso 3"
+      },
+      "sleep_curve_low_4": {
+        "name": "Curva de sueño baja, paso 4"
+      },
+      "sleep_curve_low_5": {
+        "name": "Curva de sueño baja, paso 5"
+      },
+      "sleep_curve_low_6": {
+        "name": "Curva de sueño baja, paso 6"
+      },
+      "sleep_curve_low_7": {
+        "name": "Curva de sueño baja, paso 7"
+      },
+      "sleep_curve_low_8": {
+        "name": "Curva de sueño baja, paso 8"
+      },
+      "sleep_curve_high_1": {
+        "name": "Curva de sueño alta, paso 1"
+      },
+      "sleep_curve_high_2": {
+        "name": "Curva de sueño alta, paso 2"
+      },
+      "sleep_curve_high_3": {
+        "name": "Curva de sueño alta, paso 3"
+      },
+      "sleep_curve_high_4": {
+        "name": "Curva de sueño alta, paso 4"
+      },
+      "sleep_curve_high_5": {
+        "name": "Curva de sueño alta, paso 5"
+      },
+      "sleep_curve_high_6": {
+        "name": "Curva de sueño alta, paso 6"
+      },
+      "sleep_curve_high_7": {
+        "name": "Curva de sueño alta, paso 7"
+      },
+      "sleep_curve_high_8": {
+        "name": "Curva de sueño alta, paso 8"
+      },
+      "temperature_display_offset": {
+        "name": "Compensación de la temperatura mostrada"
+      },
+      "up_down_fan_port": {
+        "name": "Puerto del ventilador arriba/abajo"
+      }
+    }
+  },
+  "issues": {
+    "deprecated_quiet_switch": {
+      "title": "{entity_id} está obsoleto",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "¿Deshabilitar {entity_id}?",
+            "description": "{entity_id} se eliminará en una versión futura. Silencioso es ahora un modo de ventilador de la entidad de climatización. Úsalo (o el campo fan_mode de ewpe_smart.set_state) en tus automatizaciones y paneles.\n\n¿Deshabilitar {entity_id} ahora? Puedes volver a habilitarlo en la configuración de la entidad hasta que se elimine."
+          }
+        }
+      }
+    },
+    "deprecated_turbo_switch": {
+      "title": "{entity_id} está obsoleto",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "¿Deshabilitar {entity_id}?",
+            "description": "{entity_id} se eliminará en una versión futura. Turbo es ahora un modo de ventilador de la entidad de climatización. Úsalo (o el campo fan_mode de ewpe_smart.set_state) en tus automatizaciones y paneles.\n\n¿Deshabilitar {entity_id} ahora? Puedes volver a habilitarlo en la configuración de la entidad hasta que se elimine."
+          }
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "command_failed": {
+      "message": "No se ha podido enviar el comando al dispositivo: {error}"
+    },
+    "unsupported_hvac_mode": {
+      "message": "El modo HVAC {hvac_mode} no es compatible."
+    },
+    "temperature_out_of_range": {
+      "message": "La temperatura {temperature} está fuera del rango {min_temp}-{max_temp} °C."
+    },
+    "unsupported_fan_mode": {
+      "message": "El modo de ventilador {fan_mode} no es compatible."
+    }
+  },
+  "services": {
+    "set_state": {
+      "name": "Establecer estado",
+      "description": "Establece el modo, la temperatura objetivo y el modo de ventilador (incluidos silencioso y turbo) en un solo comando, para que la unidad pite una sola vez.",
+      "fields": {
+        "hvac_mode": {
+          "name": "Modo HVAC",
+          "description": "Modo de funcionamiento. Con Apagado, la unidad se apaga."
+        },
+        "temperature": {
+          "name": "Temperatura",
+          "description": "Temperatura objetivo."
+        },
+        "fan_mode": {
+          "name": "Modo de ventilador",
+          "description": "Velocidad del ventilador."
+        }
+      }
+    }
+  },
+  "selector": {
+    "hvac_mode": {
+      "options": {
+        "off": "Apagado",
+        "auto": "Automático",
+        "cool": "Frío",
+        "heat": "Calor",
+        "dry": "Seco",
+        "fan_only": "Solo ventilador"
+      }
+    },
+    "fan_mode": {
+      "options": {
+        "auto": "Automático",
+        "low": "Bajo",
+        "medium_low": "Medio-bajo",
+        "medium": "Medio",
+        "medium_high": "Medio-alto",
+        "high": "Alto",
+        "quiet": "Silencioso",
+        "turbo": "Turbo"
+      }
+    }
+  }
+}
